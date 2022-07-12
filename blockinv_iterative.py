@@ -31,9 +31,12 @@ def block_inv(A,idx):
     E, F, G, H = A[0:idx, 0:idx], A[0:idx, idx:n],  A[idx:n, 0:idx], A[idx:n, idx:n]  # E on nyt idx * idx -matriisi
     E = np.linalg.inv(E)
     F = -E@F
-    H, G = H+G@F, G@E
-    H = np.linalg.inv(H)
+    H = H+G@F
+    G, H = G@E, np.linalg.inv(H)
     G = -H@G
+    # the line below can be parallelized if we can make sure
+    # both operations take their own copy of the value of F as it is
+    # before the line, and only after this F is overwritten by F@H
     E, F  = E+F@G, F@H
     return np.block([[E, F], [G, H]])
 
@@ -47,9 +50,12 @@ def block_iter_inv(M,i):
     E = block_inv(E, int(k/2))
     while m <= i*k:
         F = -E@F
-        H, G = H+G@F, G@E
-        H = block_inv(H, int(k/2))
+        H = H+G@F
+        G, H = G@E, block_inv(H, int(k/2))
         G = -H@G
+        # the line below can be parallelized if we can make sure
+        # both operations take their own copy of the value of F as it is
+        # before the line, and only after this F is overwritten by F@H
         E, F = E+F@G, F@H
         if m < (i-1)*k:
             #Replace E with the inverted submatrix and form a block partition of a larger submatrix of M
@@ -60,11 +66,11 @@ def block_iter_inv(M,i):
     return np.block([[E, F], [G, H]])   
 
 # # 41 x 41 -matriisi
-# ds_1 = xr.open_dataset("regions_verify_isotope_202112_cov.nc")
+# ds_1 = xr.open_dataset("data/regions_verify_isotope_202112_cov.nc")
 # bio_1 = ds_1["covariance_bio"]
 
 #  6858 x 6858 -matriisi
-# ds_2 = xr.open_dataset("regions_verify_202104_cov.nc")
+# ds_2 = xr.open_dataset("data/regions_verify_202104_cov.nc")
 # bio_2 = ds_2["covariance_bio"]
 # anth_2 = ds_2["covariance_anth"]
 
@@ -74,28 +80,6 @@ def block_iter_inv(M,i):
 # inv1 = np.linalg.inv(bio_2)
 # inv2 = block_inv(bio_2, 1000)
 # inv3 = block_iter_inv(bio_2, 15)
-
-# print(np.allclose(inv1, inv2))
-# print(np.allclose(inv1, inv3))
-
-# timeit.timeit("numpy.linalg.inv(bio_2)")
-
-# timeit.timeit(block_iter_inv(bio_2, 5))
-
-
-# start = time.time()
-# inv2 = np.linalg.inv(bio_2)
-# end = time.time()
-# print("Default inv function", end-start)
-
-# i = 10
-# start = time.time()
-# inv = block_iter_inv(bio_2, i)
-# end = time.time()
-# print("block_inv ", i, "iterations", end-start)
-
-
-
 
 # iv1, inv3 = xr.DataArray(inv1), xr.DataArray(inv3)
 
@@ -107,17 +91,3 @@ def block_iter_inv(M,i):
 # plt.show()
 
 
-
-
-# for i in range(500, 4000, 500):
-#     start = time.time()
-#     block2 = block_iter_inv(bio_2, i)
-#     end = time.time()
-
-#     print("idx: ", i, "Blockwise 2 iter time", end-start)
-
-#     start = time.time()
-#     block2 = block_inv(bio_2, i)
-#     end = time.time()
-
-#     print("idx: ", i, "Blockwise time", end-start)
