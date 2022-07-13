@@ -3,8 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import xarray as xr
-import time
-import timeit
+
 
 # THINGS TO CONSIDER: 
 # 
