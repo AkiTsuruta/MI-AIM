@@ -1,5 +1,6 @@
 import numpy as np
 invm = np.linalg.inv
+block = np.block
 
 # import matplotlib.pyplot as plt
 # import matplotlib.colors as colors
@@ -8,8 +9,6 @@ invm = np.linalg.inv
 
 # THINGS TO CONSIDER: 
 # 
-# 1) VOIKO KÄYDÄ NIIN, ETTÄ K:N PYÖRISTYKSEN TAKIA JOKU OSA JÄÄ ULKOPUOLELLE?
-#
 # 2) 2 iteraatiolla ei taida toimia tuo funktio
 #
 # 3) Should the conversion of XarrayDataArray to numpy array happen
@@ -38,16 +37,42 @@ def block_inv(A,idx):
     # both operations take their own copy of the value of F as it is
     # before the line, and only after this F is overwritten by F@H
     E, F  = E+F@G, F@H
-    return np.block([[E, F], [G, H]])
+    return block([[E, F], [G, H]])
 
-def block_iter_inv_w(M,i):
+
+def block_iter_inv(M,i):
     """Function performs an iterative inversion of 2-D numpy array M in i>1 iterations by partitioning it
     into smaller blocks and inverting these one by one using a block Gaussian approach
     
-    WITH WHILE-LOOP"""
+    WITH FOR-LOOP. Previously called block_iter_inv_f"""
     n = len(M)
     k = int(n/i)
-    m = 2*k
+    l = k+k
+    E, F, G, H = M[0:k, 0:k], M[0:k, k:l], M[k:l, 0:k], M[k:l, k:l] 
+    E = invm(E)
+    for m in range(l, (i+1)*k, k):
+        F = -E@F
+        H = H+G@F
+        G, H = G@E, invm(H)
+        G = -H@G
+        # the line below can be parallelized if we can make sure
+        # both operations take their own copy of the value of F as it is
+        # before the line, and only after this F is overwritten by F@H
+        E, F = E+F@G, F@H
+        if m < (i-1)*k:
+            #Replace E with the inverted submatrix and form a block partition of a larger submatrix of M
+            E, F, G, H = block([[E, F], [G, H]]), M[0:m, m:m+k], M[m:m+k, 0:m], M[m:m+k, m:m+k] 
+        elif m == (i-1)*k: # Need to make sure that the last block partition doesn't "leave out" some cells as a result of rounding in k = int(n/i)
+            E, F, G, H = block([[E, F], [G, H]]), M[0:m, m:n], M[m:n, 0:m], M[m:n, m:n]    
+    return block([[E, F], [G, H]])
+
+
+#def block_iter_inv_w(M,i):
+    """Old, slightly slower version with while-loop. Function performs an iterative inversion of 2-D numpy array M in i>1 iterations by partitioning it
+    into smaller blocks and inverting these one by one using a block Gaussian approach"""
+    n = len(M)
+    k = int(n/i)
+    m = k+k
     E, F, G, H = M[0:k, 0:k], M[0:k, k:m], M[k:m, 0:k], M[k:m, k:m] 
     E = block_inv(E, int(k/2))
     while m <= i*k:
@@ -61,15 +86,13 @@ def block_iter_inv_w(M,i):
         E, F = E+F@G, F@H
         if m < (i-1)*k:
             #Replace E with the inverted submatrix and form a block partition of a larger submatrix of M
-            E, F, G, H = np.block([[E, F], [G, H]]), M[0:m, m:m+k], M[m:m+k, 0:m], M[m:m+k, m:m+k] 
+            E, F, G, H = block([[E, F], [G, H]]), M[0:m, m:m+k], M[m:m+k, 0:m], M[m:m+k, m:m+k] 
         elif m == (i-1)*k: # Need to make sure that the last block partition doesn't "leave out" some cells as a result of rounding in k = int(n/i)
-            E, F, G, H = np.block([[E, F], [G, H]]), M[0:m, m:n], M[m:n, 0:m], M[m:n, m:n]
+            E, F, G, H = block([[E, F], [G, H]]), M[0:m, m:n], M[m:n, 0:m], M[m:n, m:n]
         m = m+k     
-    return np.block([[E, F], [G, H]])   
+    return block([[E, F], [G, H]])   
 
-# # 41 x 41 -matriisi
-# ds_1 = xr.open_dataset("data/regions_verify_isotope_202112_cov.nc")
-# bio_1 = ds_1["covariance_bio"]
+
 
 #  6858 x 6858 -matriisi
 # ds_2 = xr.open_dataset("data/regions_verify_202104_cov.nc")
@@ -93,27 +116,3 @@ def block_iter_inv_w(M,i):
 # plt.show()
 
 
-def block_iter_inv_f(M,i):
-    """Function performs an iterative inversion of 2-D numpy array M in i>1 iterations by partitioning it
-    into smaller blocks and inverting these one by one using a block Gaussian approach
-    
-    WITH FOR-LOOP. OBS! SOMETHING WRONG IN THE CODE AS NP.ALLCLOSE GIVES FALSE"""
-    n = len(M)
-    k = int(n/i)
-    E, F, G, H = M[0:k, 0:k], M[0:k, k:2*k], M[k:2*k, 0:k], M[k:2*k, k:2*k] 
-    E = block_inv(E, int(k/2))
-    for m in range(2*k, i*k, k):
-        F = -E@F
-        H = H+G@F
-        G, H = G@E, block_inv(H, int(k/2))
-        G = -H@G
-        # the line below can be parallelized if we can make sure
-        # both operations take their own copy of the value of F as it is
-        # before the line, and only after this F is overwritten by F@H
-        E, F = E+F@G, F@H
-        if m < (i-1)*k:
-            #Replace E with the inverted submatrix and form a block partition of a larger submatrix of M
-            E, F, G, H = np.block([[E, F], [G, H]]), M[0:m, m:m+k], M[m:m+k, 0:m], M[m:m+k, m:m+k] 
-        else: # Need to make sure that the last block partition doesn't "leave out" some cells as a result of rounding in k = int(n/i)
-            E, F, G, H = np.block([[E, F], [G, H]]), M[0:m, m:n], M[m:n, 0:m], M[m:n, m:n]    
-    return np.block([[E, F], [G, H]])
