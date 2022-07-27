@@ -22,7 +22,7 @@ def block_inv_s(M, idx):
     E = E-F@G@E
     return block([[E, F], [transp(F), H]])
 
-def block_iter_inv_s(M,i):
+def block_iter_inv_s(M,i = 5):
     """Function performs an iterative inversion of 2-D numpy array M in i>1 iterations by partitioning it
     into smaller blocks and inverting these one by one using a block Gaussian approach
     
@@ -54,7 +54,7 @@ def block_iter_inv_s(M,i):
     return block([[E, F], [transp(F), H]])
 
 
-def block_iter_inv_s2(M,i):
+def block_iter_inv_s2(M,i=5):
     """Function performs an iterative inversion of 2-D numpy array M in i>1 iterations by partitioning it
     into smaller blocks and inverting these one by one using a block Gaussian approach
     

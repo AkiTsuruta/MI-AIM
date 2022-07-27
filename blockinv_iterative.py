@@ -40,7 +40,7 @@ def block_inv(A,idx):
     return block([[E, F], [G, H]])
 
 
-def block_iter_inv_fdi(M,i):
+def block_iter_inv_fdi(M,i=5):
     """Function performs an iterative inversion of 2-D numpy array M in i>1 iterations by partitioning it
     into smaller blocks and inverting these one by one using a block Gaussian approach
     
@@ -72,7 +72,7 @@ def block_iter_inv_fdi(M,i):
             H = M[m:n, m:n]    
     return block([[E, F], [G, H]])
 
-def block_iter_inv_fdm(M,i):
+def block_iter_inv_fdm(M,i=5):
     """Function performs an iterative inversion of 2-D numpy array M in i>1 iterations by partitioning it
     into smaller blocks and inverting these one by one using a block Gaussian approach
     
@@ -98,7 +98,7 @@ def block_iter_inv_fdm(M,i):
             E, F, G, H = block([[E, F], [G, H]]), M[0:m, m:n], M[m:n, 0:m], M[m:n, m:n]    
     return block([[E, F], [G, H]])
 
-def block_iter_inv_fbm(M,i):
+def block_iter_inv_fbm(M,i=5):
     """Function performs an iterative inversion of 2-D numpy array M in i>1 iterations by partitioning it
     into smaller blocks and inverting these one by one using a block Gaussian approach
     
