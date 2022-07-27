@@ -128,9 +128,9 @@ def write_to_file(filename,xb,xa,B,A,time,y,R,diff):
 
 if __name__ == "__main__":
 
-    nstate = 100   # number of states
-    nobs = 50   # number of observations for the whole time
-    tw = 10      # length of time window
+    nstate = 5000   # number of states
+    nobs = 500   # number of observations for the whole time
+    tw = 100     # length of time window
     
     x_mu = 1    # state mean values
     y_mu = 1800 # observation mean values
@@ -156,7 +156,7 @@ if __name__ == "__main__":
         xa, A, diff = optimize(useKG, xb, B, y_t, H_t, R_t)
 
         # Write data to netCDF file
-        wfile = f'kf_outputs/output2/out_{timestep:02d}.nc'
+        wfile = f'kf_outputs/output4/out_{timestep:02d}.nc'
         write_to_file(wfile,xb,xa,B,A,t[w],y_t,R_t,diff)
 
         # The updated state is prior for next state
