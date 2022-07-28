@@ -50,7 +50,7 @@ import xarray as xr
 from copy import deepcopy
 from blockinv_iterative import block_iter_inv_fdi
 
-invm = block_iter_inv_fdi # Function to invert matrix
+invm = np.linalg.inv # Function to invert matrix
 
 def initialize_state(nstate, x_mu, x_std, filename=None):
     if filename is None: 
@@ -128,18 +128,19 @@ def write_to_file(filename,xb,xa,B,A,time,y,R,diff):
 
 if __name__ == "__main__":
 
-    nstate = 5000   # number of states
-    nobs = 500   # number of observations for the whole time
-    tw = 100     # length of time window
+    nstate = 2   # number of states
+    nobs = 50   # number of observations for the whole time
+    tw = 10     # length of time window
     
     x_mu = 1    # state mean values
     y_mu = 1800 # observation mean values
     x_std = 0.8 # state uncertainty
     y_std = 15  # obs. uncertainty
 
+    fname = f'simulated_data/simulation_01/init_data_01'
     # initialize values
-    xb, B, nstate = initialize_state(nstate, x_mu, x_std)
-    t, y, R, nobs = initialize_obs(nobs,y_mu,y_std)
+    xb, B, nstate = initialize_state(nstate, x_mu, x_std, filename=fname)
+    t, y, R, nobs = initialize_obs(nobs, y_mu, y_std, filename=fname)
 
     useKG = True # whether to use Kalman gain or not
     H = np.ones((nobs,nstate))*1800 # dummy observation operator
@@ -156,7 +157,7 @@ if __name__ == "__main__":
         xa, A, diff = optimize(useKG, xb, B, y_t, H_t, R_t)
 
         # Write data to netCDF file
-        wfile = f'kf_outputs/output4/out_{timestep:02d}.nc'
+        wfile = f'simulated_data/simulation_01/s1_out_KGTdf_{timestep:02d}.nc'
         write_to_file(wfile,xb,xa,B,A,t[w],y_t,R_t,diff)
 
         # The updated state is prior for next state
