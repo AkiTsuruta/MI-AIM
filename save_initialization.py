@@ -1,5 +1,5 @@
 """Program to save the test data created by functions initialize_state and
-initialize_obs (in the case when filename = None) so that the same data
+initialize_obs from kf.py (in the case when filename = None) so that the same data
 can be then used to run kf with different matrix inversion functions. """
 
 import numpy as np
@@ -15,7 +15,6 @@ def write_simdata_to_file(filename,xb,B,t,y,R):
     out['obs'] = ('time',y)
     out['R'] = (('time','time'),R)
     out.to_netcdf(filename)
-
 
 
 if __name__ == "__main__":
@@ -34,5 +33,5 @@ if __name__ == "__main__":
     t, y, R, nobs = initialize_obs(nobs,y_mu,y_std)
 
     # Write simulated data to netCDF file
-    #wfile = f'simulated_data/simulation_02/init_data'
+    wfile = f'simulated_data/simulation_01/init_data.nc'
     write_simdata_to_file(wfile, xb, B, t, y, R)

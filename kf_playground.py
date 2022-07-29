@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 """
-MAIJAN SOTKEMA KOPIO
+MAIJAN MUUNTELEMA KOPIO
 
 Basic Kalman filter code to minimize the cost function
 
@@ -48,7 +48,6 @@ File Created: 2022-06-23
 import numpy as np
 import xarray as xr
 from copy import deepcopy
-from blockinv_iterative import block_iter_inv_fdi
 
 invm = np.linalg.inv # Function to invert matrix
 
@@ -75,7 +74,7 @@ def initialize_obs(nobs,y_mu,y_std,filename=None):
         y = data.obs
         t = data.time
         R = data.R
-        nobs = data.dims['nobs']
+        nobs = data.dims['time'] # changed from 'nobs' to 'time' to match simulated data
     return t, y, R, nobs
 
     
@@ -137,7 +136,7 @@ if __name__ == "__main__":
     x_std = 0.8 # state uncertainty
     y_std = 15  # obs. uncertainty
 
-    fname = f'simulated_data/simulation_01/init_data_01'
+    fname = "simulated_data/simulation_01/init_data.nc"
     # initialize values
     xb, B, nstate = initialize_state(nstate, x_mu, x_std, filename=fname)
     t, y, R, nobs = initialize_obs(nobs, y_mu, y_std, filename=fname)
