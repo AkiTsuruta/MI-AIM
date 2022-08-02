@@ -123,6 +123,7 @@ def write_to_file(filename,xb,xa,B,A,time,y,R,diff):
     out['obs_unc'] = (('time','time'),R)
     out['differences'] = ('time',diff)
     out.differences.attrs['comments'] = 'Obs - prior differences'
+    out.attrs['comments'] = f'Inv function: xxxx, useKG: {useKG}'
     out.to_netcdf(filename)
 
 if __name__ == "__main__":
@@ -136,7 +137,7 @@ if __name__ == "__main__":
     x_std = 0.8 # state uncertainty
     y_std = 15  # obs. uncertainty
 
-    fname = "simulated_data/simulation_01/init_data.nc"
+    fname = "simulated_data/simulation_01/s01_init.nc"
     # initialize values
     xb, B, nstate = initialize_state(nstate, x_mu, x_std, filename=fname)
     t, y, R, nobs = initialize_obs(nobs, y_mu, y_std, filename=fname)
@@ -161,46 +162,3 @@ if __name__ == "__main__":
 
         # The updated state is prior for next state
         xb, B = predict(xa,A)
-
-################################################################
-
-# nstate = 2   # number of states
-# nobs = 50   # number of observations for the whole time
-# tw = 10     # length of time window
-    
-# x_mu = 1    # state mean values
-# y_mu = 1800 # observation mean values
-# x_std = 0.8 # state uncertainty
-# y_std = 15
-
-# fname = "simulated_data/simulation_01/init_data.nc"
-
-
-# xb, B, nstate = initialize_state(nstate, x_mu, x_std, filename=fname)
-# t, y, R, nobs = initialize_obs(nobs, y_mu, y_std, filename=fname)
-
-# useKG = True # whether to use Kalman gain or not
-# H = np.ones((nobs,nstate))*1800 # dummy observation operator
-
-# for timestep in range( int(len(t)/tw) ): #Loop through time
-#     # Select observational data for this time 
-#     # tuo w taitaa siis olla lista boolean-merkeistä että valkkaa aina tietyn aikaikkunan havainnot  y[w]
-#     w = np.where((t>=timestep*tw)&(t<timestep*tw+tw))[0]
-#     y_t = y[w]
-#     R_t = R[w,:][:,w] 
-#     H_t= H[w,:]
-    
-#     diff = y_t - H_t.dot(xb)
-    
-#     # Calculate Kalman gain
-#     S  = R_t + H_t.dot(B).dot(H_t.T)
-#     Si = invm(S)
-
-    
-#     KG = B.dot(H_t.T).dot(Si)
-#     print(KG)
-    
-
-    # Posteriors
-    # xa = xb + KG.dot(diff)
-    # A = B - KG.dot(H).dot(B)
