@@ -58,8 +58,8 @@ def initialize_state(nstate, x_mu, x_std, filename=None):
     else: 
         # Read data from file
         data = xr.open_dataset(filename)
-        xb = data.state
-        B = data.cov
+        xb = data.state.values
+        B = data.cov.values
         nstate = data.dims['nstate']
     return xb, B, nstate
 
@@ -71,9 +71,9 @@ def initialize_obs(nobs,y_mu,y_std,filename=None):
     else:
         # Read data from file
         data = xr.open_dataset(filename)
-        y = data.obs
-        t = data.time
-        R = data.R
+        y = data.obs.values
+        t = data.time.values
+        R = data.R.values
         nobs = data.dims['time'] # changed from 'nobs' to 'time' to match simulated data
     return t, y, R, nobs
 
@@ -156,10 +156,51 @@ if __name__ == "__main__":
         xa, A, diff = optimize(useKG, xb, B, y_t, H_t, R_t)
 
         # Write data to netCDF file
-        wfile = f'simulated_data/simulation_01/s1_out_KGTdf_{timestep:02d}.nc'
+        wfile = f'simulated_data/simulation_01/s1_out_testi_{timestep:02d}.nc'
         write_to_file(wfile,xb,xa,B,A,t[w],y_t,R_t,diff)
 
         # The updated state is prior for next state
         xb, B = predict(xa,A)
 
+################################################################
 
+# nstate = 2   # number of states
+# nobs = 50   # number of observations for the whole time
+# tw = 10     # length of time window
+    
+# x_mu = 1    # state mean values
+# y_mu = 1800 # observation mean values
+# x_std = 0.8 # state uncertainty
+# y_std = 15
+
+# fname = "simulated_data/simulation_01/init_data.nc"
+
+
+# xb, B, nstate = initialize_state(nstate, x_mu, x_std, filename=fname)
+# t, y, R, nobs = initialize_obs(nobs, y_mu, y_std, filename=fname)
+
+# useKG = True # whether to use Kalman gain or not
+# H = np.ones((nobs,nstate))*1800 # dummy observation operator
+
+# for timestep in range( int(len(t)/tw) ): #Loop through time
+#     # Select observational data for this time 
+#     # tuo w taitaa siis olla lista boolean-merkeistä että valkkaa aina tietyn aikaikkunan havainnot  y[w]
+#     w = np.where((t>=timestep*tw)&(t<timestep*tw+tw))[0]
+#     y_t = y[w]
+#     R_t = R[w,:][:,w] 
+#     H_t= H[w,:]
+    
+#     diff = y_t - H_t.dot(xb)
+    
+#     # Calculate Kalman gain
+#     S  = R_t + H_t.dot(B).dot(H_t.T)
+#     Si = invm(S)
+
+    
+#     KG = B.dot(H_t.T).dot(Si)
+#     print(KG)
+    
+
+    # Posteriors
+    # xa = xb + KG.dot(diff)
+    # A = B - KG.dot(H).dot(B)
