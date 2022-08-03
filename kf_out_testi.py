@@ -1,25 +1,32 @@
 import xarray as xr
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 
 
 
 # Purkkaratkaisu matriisien lukemiseksi, kun xr-funktioilla ei näyttänyt
 # fiksusti onnistuvan
 
-Bs = [] # list for storing prior covariance matrices
-As = [] # posterior covariance matrices
-Rs = [] # observation error covariance matrices
+B_s = [] # list for storing prior covariance matrices
+A_s = [] # posterior covariance matrices
+R_s = [] # observation error covariance matrices
 for i in range(5):
-    data = xr.open_dataset(f"kf_outputs/output3/out_0{i}.nc")
-    Bs.append(data["prior_cov"])
-    As.append(data["posterior_cov"])
-    Rs.append(data["obs_unc"])
+    data = xr.open_dataset(f"simulated_data/simulation_00/s_00_out_{i:2d}.nc")
+    B_s.append(data["prior_cov"])
+    A_s.append(data["posterior_cov"])
+    R_s.append(data["obs_unc"])
 
 
-for i in range(1):
-    fig, ax = plt.subplots(layout = 'constrained')
-    As[i].plot.pcolormesh(yincrease = False, robust = True)
-    plt.show()
-
+fig, axs = plt.subplots(2,3)
+axs[-1,-1].axis('off')
+for j in range(5):
+    minval = A_s[j].values.min()
+    maxval = A_s[j].values.max()
+    if j < 3:
+        A_s[j].plot.imshow(ax = axs[0,j], yincrease = False, robust = True)
+    else:
+        A_s[j].plot.imshow(ax=axs[1,j-3], yincrease = False, robust = True)
+plt.tight_layout()
+plt.show()
 
