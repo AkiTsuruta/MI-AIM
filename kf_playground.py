@@ -48,6 +48,7 @@ File Created: 2022-06-23
 import numpy as np
 import xarray as xr
 from copy import deepcopy
+from blockinv_iterative import block_iter_inv
 
 invm = np.linalg.inv # Function to invert matrix
 
@@ -130,14 +131,14 @@ if __name__ == "__main__":
 
     nstate = None   # number of states
     nobs = None  # number of observations for the whole time
-    tw =  20    # length of time window
+    tw =  10    # length of time window
     
     x_mu = None    # state mean values
     y_mu = None # observation mean values
     x_std = None # state uncertainty
     y_std = None  # obs. uncertainty
 
-    i = 5
+    i = 0
 
     fname = f'simulated_data/simulation_{i:02d}/s{i:02d}_init.nc'
     # initialize values
@@ -158,7 +159,7 @@ if __name__ == "__main__":
         xa, A, diff = optimize(useKG, xb, B, y_t, H_t, R_t)
 
         # Write data to netCDF file
-        wfile = f'simulated_data/simulation_{i:02d}/s{i:02d}_out_{timestep:02d}.nc'
+        wfile = f'simulated_data/simulation_{i:02d}/s{i:02d}_out_{timestep:02d}fb.nc'
         write_to_file(wfile,xb,xa,B,A,t[w],y_t,R_t,diff)
 
         # The updated state is prior for next state
