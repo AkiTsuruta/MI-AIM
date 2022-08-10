@@ -48,7 +48,7 @@ File Created: 2022-06-23
 import numpy as np
 import xarray as xr
 from copy import deepcopy
-from blockinv_iterative import block_iter_inv
+from blockinv_iterative import block_inv
 
 invm = np.linalg.inv # Function to invert matrix
 

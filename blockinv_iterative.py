@@ -20,7 +20,7 @@ block = np.block
 
  
 
-def block_inv(A,idx):
+def block_inv_simple(A,idx):
     """Function divides 2-D numpy array A (i.e. xarrayDataArrays need to be converted
     to numpy before using this function) into four blocks, so that the lower 
     left-hand corner of the first block is at A[idx-1,idx-1]. Then the
@@ -40,7 +40,7 @@ def block_inv(A,idx):
     return block([[E, F], [G, H]])
 
 
-def block_iter_inv(M,i=5):
+def block_inv(M,i=5):
     """Function performs an iterative inversion of 2-D numpy array M in i>1 iterations (defaults to 5) by partitioning it
     into smaller blocks and inverting these one by one using a block Gaussian approach
     

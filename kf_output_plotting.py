@@ -33,36 +33,16 @@ for i in range(1,6):
 
 
 
-data = np_t[0]
-
-#En ole keksinyt miten nuo 5 aikaikkunan viivat saisi yhdistettyä
-# fig, ax = plt.subplots(layout = 'constrained')
-# ax.plot(data["time"], data["obs"].transpose(), color = 'blue', marker = 'o')
-# plt.show()
-
-# fig, axs = plt.subplots(2,2, layout = 'constrained')
-# #plot posteriors for different states in state vector
-# axs[0,0].plot(data["posterior"][:,0], 'o')
-# axs[0,1].plot(data["posterior"][:,1], 'o')
-# axs[1,0].plot(data["posterior"][:,2], 'o')
-# axs[1,1].plot(data["posterior"][:,3], 'o')
-# plt.show()
+data = np_t[1]
 
 
-
-# print(data['differences'].values)
-
-# # Alla piirrettynä obs - H*y erot kussakin aikaikkunassa.
-# # Koska ensimmäisessä aikaikkunassa erot niin suuret, 
-# # niin voisi vielä erikseen piirtää muut aikaikkunat
-# # ilman ensimmäistä (tai tutkailla voiko y-akselin "katkaista")
-
-# fig, ax = plt.subplots(layout = 'constrained')
-# ax.plot(data['time'], data['differences'].transpose())
-# ax.set_ylabel('Difference')
-# ax.set_xlabel('Time')
-# ax.set_title('Obs - prior differences')
-# plt.show()
+fig, axs = plt.subplots(2,2, layout = 'constrained')
+#plot posteriors for different states in state vector
+axs[0,0].plot(data["posterior"][:,0], 'o')
+axs[0,1].plot(data["posterior"][:,1], 'o')
+axs[1,0].plot(data["posterior"][:,2], 'o')
+axs[1,1].plot(data["posterior"][:,3], 'o')
+plt.show()
 
 
 
