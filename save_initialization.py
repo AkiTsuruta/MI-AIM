@@ -20,9 +20,9 @@ def write_simdata_to_file(filename,xb,B,t,y,R, comments):
 
 if __name__ == "__main__":
 
-    nstate = 10000   # number of states
-    nobs = 100  # number of observations for the whole time
-    tw = 20  # length of time window
+    nstate = 10   # number of states
+    nobs = 50  # number of observations for the whole time
+    tw = 10  # length of time window
     
     x_mu = 1    # state mean values
     y_mu = 1800 # observation mean values
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     t, y, R, nobs = initialize_obs(nobs,y_mu,y_std)
 
     # Write simulated data to netCDF file
-    i = 5 
+    i = 0 
     newdir = f'simulated_data/simulation_{i:02d}'
     os.mkdir(newdir)
     wfile = f'{newdir}/s{i:02d}_init.nc'

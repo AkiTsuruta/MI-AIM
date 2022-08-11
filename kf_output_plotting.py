@@ -15,7 +15,7 @@ bl_f = []
 # there were only two states), so I'll only use data from simulations 1 to 5 (so not simulation 0)
 
 
-for i in range(1,6):
+for i in range(6):
 
     np_t.append(xr.open_mfdataset(f"simulated_data/simulation_0{i}/out_default_with_kf/*.nc",
                                     concat_dim='time2',combine='nested', drop_variables=["prior_cov", "posterior_cov", "obs_unc"]))
@@ -33,16 +33,19 @@ for i in range(1,6):
 
 
 
-data = np_t[1]
+dat = xr.open_dataset("simulated_data/simulation_01/s01_init.nc")
+print(dat.comments)
 
 
-fig, axs = plt.subplots(2,2, layout = 'constrained')
-#plot posteriors for different states in state vector
-axs[0,0].plot(data["posterior"][:,0], 'o')
-axs[0,1].plot(data["posterior"][:,1], 'o')
-axs[1,0].plot(data["posterior"][:,2], 'o')
-axs[1,1].plot(data["posterior"][:,3], 'o')
-plt.show()
+
+
+# fig, axs = plt.subplots(2,2, layout = 'constrained')
+# #plot posteriors for different states in state vector
+# axs[0,0].plot(data["posterior"][:,0], 'o')
+# axs[0,1].plot(data["posterior"][:,1], 'o')
+# axs[1,0].plot(data["posterior"][:,2], 'o')
+# axs[1,1].plot(data["posterior"][:,3], 'o')
+# plt.show()
 
 
 
