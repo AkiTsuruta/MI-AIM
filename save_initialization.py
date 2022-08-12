@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """Program to save the test data created by functions initialize_state and
 initialize_obs from kf.py (in the case when filename = None) so that the same data
 can be then used to run kf with different matrix inversion functions and useKG values. """
