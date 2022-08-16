@@ -49,9 +49,9 @@ import os
 import numpy as np
 import xarray as xr
 from copy import deepcopy
-# from blockinv_iterative import block_inv
+from blockinv_iterative import block_inv
 
-#invm = np.linalg.inv # Function to invert matrix
+invm = block_inv # Function to invert matrix
 
 def initialize_state(nstate, x_mu, x_std, filename=None):
     if filename is None: 
@@ -114,7 +114,7 @@ def predict(xa,A,M=None,Q=None):
     return xb, B
 
 
-# def write_to_file(filename,xb,xa,B,A,time,y,R,diff):
+def write_to_file(filename,xb,xa,B,A,time,y,R,diff):
     out = xr.Dataset()
     out['prior'] = (('nstate'),xb)
     out['posterior'] = (('nstate'),xa)
@@ -125,21 +125,21 @@ def predict(xa,A,M=None,Q=None):
     out['obs_unc'] = (('time','time'),R)
     out['differences'] = ('time',diff)
     out.differences.attrs['comments'] = 'Obs - prior differences'
-    out.attrs['comments'] = f'Matrix inverse function: {invm.__name__} from module: {invm.__module__}. useKG: {useKG}'
+    out.attrs['comments'] = f'Fixed version of H. Matrix inverse function: {invm.__name__} from module: {invm.__module__}. useKG: {useKG}'
     out.to_netcdf(filename)
 
 if __name__ == "__main__":
 
     nstate = None   # number of states
     nobs = None  # number of observations for the whole time
-    tw =  10 # length of time window
+    tw = 20 # length of time window
     
     x_mu = None    # state mean values
     y_mu = None # observation mean values
     x_std = None # state uncertainty
     y_std = None  # obs. uncertainty
 
-    i = 0 # when using simulated data: simulation number
+    i = 5 # when using simulated data: simulation number
 
     fname = f'simulated_data/simulation_{i:02d}/s{i:02d}_init.nc' # file to read
 
@@ -148,21 +148,21 @@ if __name__ == "__main__":
     t, y, R, nobs = initialize_obs(nobs, y_mu, y_std, filename=fname)
 
     useKG = True # whether to use Kalman gain or not
-    H = np.ones((nobs,nstate))*1800 # dummy observation operator
+    H = np.ones((nobs,nstate))*1800/nstate # dummy observation operator
 
-    # create a folder for output data
-    # if useKG:
-    #     name_end = "with_kf"
-    # else:
-    #     name_end = "without_kf"
-    # if invm.__module__ == "numpy.linalg":
-    #     dirname = f'out_default_{name_end}'
-    # elif invm.__module__ == "blockinv_iterative":
-    #     dirname = f'out_block_{name_end}'
-    # else: 
-    #     dirname = f'out_{invm.__name__}_{name_end}'
-    # newdir = f'simulated_data/simulation_{i:02d}/{dirname}' 
-    # os.mkdir(newdir)
+    #create a folder for output data
+    if useKG:
+        name_end = "with_kf"
+    else:
+        name_end = "without_kf"
+    if invm.__module__ == "numpy.linalg":
+        dirname = f'out1_default_{name_end}'
+    elif invm.__module__ == "blockinv_iterative":
+        dirname = f'out1_block_{name_end}'
+    else: 
+        dirname = f'out1_{invm.__name__}_{name_end}'
+    newdir = f'simulated_data/simulation_{i:02d}/{dirname}' 
+    os.mkdir(newdir)
 
     for timestep in range( int(len(t)/tw) ): #Loop through time
         # Select observational data for this time 
@@ -175,8 +175,8 @@ if __name__ == "__main__":
         xa, A, diff = optimize(useKG, xb, B, y_t, H_t, R_t)
 
         # Write data to netCDF file
-        # wfile = f'{newdir}/s{i:02d}_out_{timestep:02d}.nc'
-        # write_to_file(wfile,xb,xa,B,A,t[w],y_t,R_t,diff)
+        wfile = f'{newdir}/s{i:02d}_out_{timestep:02d}.nc'
+        write_to_file(wfile,xb,xa,B,A,t[w],y_t,R_t,diff)
 
         # The updated state is prior for next state
         xb, B = predict(xa,A)
