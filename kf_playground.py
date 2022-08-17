@@ -51,7 +51,7 @@ import xarray as xr
 from copy import deepcopy
 from blockinv_iterative import block_inv
 
-invm = block_inv # Function to invert matrix
+invm = np.linalg.inv # Function to invert matrix
 
 def initialize_state(nstate, x_mu, x_std, filename=None):
     if filename is None: 
@@ -132,14 +132,14 @@ if __name__ == "__main__":
 
     nstate = None   # number of states
     nobs = None  # number of observations for the whole time
-    tw = 20 # length of time window
+    tw = 10 # length of time window
     
     x_mu = None    # state mean values
     y_mu = None # observation mean values
     x_std = None # state uncertainty
     y_std = None  # obs. uncertainty
 
-    i = 5 # when using simulated data: simulation number
+    i = 8 # when using simulated data: simulation number
 
     fname = f'simulated_data/simulation_{i:02d}/s{i:02d}_init.nc' # file to read
 
@@ -156,11 +156,11 @@ if __name__ == "__main__":
     else:
         name_end = "without_kf"
     if invm.__module__ == "numpy.linalg":
-        dirname = f'out1_default_{name_end}'
+        dirname = f'out_default_{name_end}'
     elif invm.__module__ == "blockinv_iterative":
-        dirname = f'out1_block_{name_end}'
+        dirname = f'out_block_{name_end}'
     else: 
-        dirname = f'out1_{invm.__name__}_{name_end}'
+        dirname = f'out_{invm.__name__}_{name_end}'
     newdir = f'simulated_data/simulation_{i:02d}/{dirname}' 
     os.mkdir(newdir)
 

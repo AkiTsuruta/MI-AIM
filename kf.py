@@ -139,7 +139,7 @@ if __name__ == "__main__":
     t, y, R, nobs = initialize_obs(nobs,y_mu,y_std)
 
     useKG = True # whether to use Kalman gain or not
-    H = np.ones((nobs,nstate))*1800 # dummy observation operator
+    H = np.ones((nobs,nstate))*1800/nstate # dummy observation operator
 
     for timestep in range( int(len(t)/tw) ): #Loop through time
         # Select observational data for this time 
