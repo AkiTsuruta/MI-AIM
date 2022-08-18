@@ -139,7 +139,7 @@ if __name__ == "__main__":
     x_std = None # state uncertainty
     y_std = None  # obs. uncertainty
 
-    i = 8 # when using simulated data: simulation number
+    i = 12 # when using simulated data: simulation number
 
     fname = f'simulated_data/simulation_{i:02d}/s{i:02d}_init.nc' # file to read
 
