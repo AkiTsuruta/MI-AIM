@@ -14,7 +14,7 @@ def dechunk_var(da, variable:str, tw:int, ntw = 5):
     flat_var = xr.concat(ls, dim = 'time')
     return flat_var
 
-def diff_post(da):
+def diff_post(da, H_coeff = 1800):
     '''Function to calculate obs-post difference from
     given data in a similar way as obs-prior differences
     are calculated in kf.py
@@ -27,7 +27,7 @@ def diff_post(da):
     nobs = len(y)
     nstate = len(da.nstate)
     
-    H = np.ones((nobs,nstate))*1800/nstate
+    H = np.ones((nobs,nstate))*H_coeff/nstate
 
     ls = []
     for timestep in range( int(len(t)/tw) ): #Loop through time
@@ -43,3 +43,18 @@ def diff_post(da):
     
     diff_post = xr.concat(ls, dim = 'time')
     return diff_post
+
+def read_matrices(sim, subfilename):
+    """Helper function to read output matrices from simulation instance sim.
+    """
+    B = [] # prior covariance matrices
+    A = [] # posterior covariance matrices
+    R = [] # observation error covariance matrices
+
+    for i in range(5):
+        filepath = f"simulated_data/simulation_{sim:02d}/{subfilename}/s{sim:02d}_out_0{i}.nc"
+        data = xr.open_dataset(filepath)
+        B.append(data["prior_cov"])
+        A.append(data["posterior_cov"])
+        R.append(data["obs_unc"])
+    return B, A, R
