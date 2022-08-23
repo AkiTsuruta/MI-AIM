@@ -56,7 +56,7 @@ invm = np.linalg.inv # Function to invert matrix
 def initialize_state(nstate, x_mu, x_std, filename=None):
     if filename is None: 
         B = np.diag((np.ones(nstate)*x_std))
-        scale = 100 
+        scale = 10 
         xb = np.random.normal(x_mu,x_std*scale,size=nstate)
     else: 
         # Read data from file
@@ -70,7 +70,7 @@ def initialize_obs(nobs,y_mu,y_std,filename=None):
     if filename is None:
         t = np.arange(nobs) 
         y = np.sin(t) + np.random.normal(loc=y_mu, scale=y_std, size=nobs)   
-        R = np.diag((np.ones(nobs)*y_std)) 
+        R = np.diag(np.random.normal(loc=y_std, scale=40, size=nobs)) 
     else:
         # Read data from file
         data = xr.open_dataset(filename)
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     x_std = None # state uncertainty
     y_std = None  # obs. uncertainty
 
-    i = 14 # when using simulated data: simulation number
+    i = 22 # when using simulated data: simulation number
 
     fname = f'simulated_data/simulation_{i:02d}/s{i:02d}_init.nc' # file to read
 
