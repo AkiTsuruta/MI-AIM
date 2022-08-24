@@ -70,7 +70,7 @@ def initialize_obs(nobs,y_mu,y_std,filename=None):
     if filename is None:
         t = np.arange(nobs) 
         y = np.sin(t) + np.random.normal(loc=y_mu, scale=y_std, size=nobs)   
-        R = np.diag(np.random.normal(loc=y_std, scale=40, size=nobs)) 
+        R = np.diag(np.random.normal(loc=y_std, scale=20, size=nobs)) 
     else:
         # Read data from file
         data = xr.open_dataset(filename)
@@ -115,7 +115,7 @@ def predict(xa,A,M=None,Q=None):
     return xb, B
 
 
-def write_to_file(filename,xb,xa,B,A,time,y,R,diff,coeff):
+def write_to_file(filename,xb,xa,B,A,time,y,R,diff):
     out = xr.Dataset()
     out['prior'] = (('nstate'),xb)
     out['posterior'] = (('nstate'),xa)
@@ -126,7 +126,7 @@ def write_to_file(filename,xb,xa,B,A,time,y,R,diff,coeff):
     out['obs_unc'] = (('time','time'),R)
     out['differences'] = ('time',diff)
     out.differences.attrs['comments'] = 'Obs - prior differences'
-    out.attrs['comments'] = f'H with coeff {coeff}. Matrix inverse function: {invm.__name__} from module: {invm.__module__}. useKG: {useKG}'
+    out.attrs['comments'] = f'Matrix inverse function: {invm.__name__} from module: {invm.__module__}. useKG: {useKG}'
     out.to_netcdf(filename)
 
 if __name__ == "__main__":
@@ -149,11 +149,11 @@ if __name__ == "__main__":
     t, y, R, nobs = initialize_obs(nobs, y_mu, y_std, filename=fname)
 
     useKG = True # whether to use Kalman gain or not
-    coeff = 2400
+    coeff = 1400
     H = np.ones((nobs,nstate))*coeff/nstate # dummy observation operator
 
     #create a folder for output data
-    dirname = f"H_{coeff}"
+    dirname = 
     # if useKG:
     #     name_end = "with_kf"
     # else:
