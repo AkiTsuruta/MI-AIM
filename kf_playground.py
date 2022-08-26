@@ -49,13 +49,18 @@ import os
 import numpy as np
 import xarray as xr
 from copy import deepcopy
+from math import sqrt
 from blockinv_iterative import block_inv
 
 invm = np.linalg.inv # Function to invert matrix
 
-def initialize_state(nstate, x_mu, x_std, filename=None):
+def initialize_state(nstate, x_mu, x_std, filename=None, fileB = None):
     if filename is None: 
-        B = np.diag((np.ones(nstate)*x_std))
+        if fileB is None:
+            B = np.diag((np.ones(nstate)*x_std))
+        else:
+            data = xr.open_dataset(fileB)
+            B = data.covariance_bio.values[0:29,0:29]
         scale = 10 
         xb = np.random.normal(x_mu,x_std*scale,size=nstate)
     else: 
@@ -153,7 +158,7 @@ if __name__ == "__main__":
     H = np.ones((nobs,nstate))*coeff/nstate # dummy observation operator
 
     #create a folder for output data
-    dirname = 
+    dirname = changethisname
     # if useKG:
     #     name_end = "with_kf"
     # else:
