@@ -51,17 +51,23 @@ import xarray as xr
 from copy import deepcopy
 from math import sqrt
 from blockinv_iterative import block_inv
+from block_diag_inverse import block_diag_inv
 
 invm = np.linalg.inv # Function to invert matrix
 
-def initialize_state(nstate, x_mu, x_std, filename=None, fileB = None):
+def initialize_state(nstate, x_mu, x_std, filename=None, fileB = None, bio_or_anth = None):
     if filename is None: 
         if fileB is None:
             B = np.diag((np.ones(nstate)*x_std))
+            
         else:
-            data = xr.open_dataset(fileB)
-            B = data.covariance_bio.values[0:29,0:29]
-        scale = 10 
+            #fileB for when we want to use prior cov matrix from file and simulate the rest
+            data = xr.open_dataset(fileB) 
+            variable = f"covariance_{bio_or_anth}"
+            B = data[variable].values
+            nstate = len(B[0])
+            x_std = sqrt(B[0,0])
+        scale = 10
         xb = np.random.normal(x_mu,x_std*scale,size=nstate)
     else: 
         # Read data from file
@@ -138,16 +144,16 @@ if __name__ == "__main__":
 
     nstate = None   # number of states
     nobs = None  # number of observations for the whole time
-    tw = 10 # length of time window
+    tw = 100 # length of time window
     
     x_mu = None    # state mean values
     y_mu = None # observation mean values
     x_std = None # state uncertainty
     y_std = None  # obs. uncertainty
 
-    i = 22 # when using simulated data: simulation number
+    i = 3 # when using simulated data: simulation number
 
-    fname = f'simulated_data/simulation_{i:02d}/s{i:02d}_init.nc' # file to read
+    fname = f'simulated_data/with_real_prior_cov/simulation_{i:02d}/s{i:02d}_init.nc' # file to read
 
     # initialize values
     xb, B, nstate = initialize_state(nstate, x_mu, x_std, filename=fname)
@@ -158,18 +164,17 @@ if __name__ == "__main__":
     H = np.ones((nobs,nstate))*coeff/nstate # dummy observation operator
 
     #create a folder for output data
-    dirname = changethisname
-    # if useKG:
-    #     name_end = "with_kf"
-    # else:
-    #     name_end = "without_kf"
-    # if invm.__module__ == "numpy.linalg":
-    #     dirname = f'out_default_{name_end}'
-    # elif invm.__module__ == "blockinv_iterative":
-    #     dirname = f'out_block_{name_end}'
-    # else: 
-    #     dirname = f'out_{invm.__name__}_{name_end}'
-    newdir = f'simulated_data/simulation_{i:02d}/{dirname}' 
+    if useKG:
+        name_end = "with_kf"
+    else:
+        name_end = "without_kf"
+    if invm.__module__ == "numpy.linalg":
+        dirname = f'out_default_{name_end}'
+    elif invm.__module__ == "blockinv_iterative":
+        dirname = f'out_block_{name_end}'
+    else: 
+        dirname = f'out_{invm.__name__}_{name_end}'
+    newdir = f'simulated_data/with_real_prior_cov/simulation_{i:02d}/{dirname}' 
     os.mkdir(newdir)
 
     for timestep in range( int(len(t)/tw) ): #Loop through time
@@ -184,7 +189,7 @@ if __name__ == "__main__":
 
         # Write data to netCDF file
         wfile = f'{newdir}/s{i:02d}_out_{timestep:02d}.nc'
-        write_to_file(wfile,xb,xa,B,A,t[w],y_t,R_t,diff,coeff)
+        write_to_file(wfile,xb,xa,B,A,t[w],y_t,R_t,diff)
 
         # The updated state is prior for next state
         xb, B = predict(xa,A)
