@@ -44,15 +44,16 @@ def diff_post(da, H_coeff = 1800):
     diff_post = xr.concat(ls, dim = 'time')
     return diff_post
 
-def read_matrices(sim, subfilename):
-    """Helper function to read output matrices from simulation instance sim.
+def read_matrices(sim, foldername, subfoldername):
+    """Helper function to read output matrices from simulation instance sim in folder
+    foldername. Returns B, A, R
     """
     B = [] # prior covariance matrices
     A = [] # posterior covariance matrices
     R = [] # observation error covariance matrices
 
     for i in range(5):
-        filepath = f"simulated_data/simulation_{sim:02d}/{subfilename}/s{sim:02d}_out_0{i}.nc"
+        filepath = f"simulated_data/{foldername}/simulation_{sim:02d}/{subfoldername}/s{sim:02d}_out_{i:02d}.nc"
         data = xr.open_dataset(filepath)
         B.append(data["prior_cov"])
         A.append(data["posterior_cov"])
