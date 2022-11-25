@@ -1,6 +1,6 @@
 #!/bin/bash 
-#SBATCH --job-name= col_inv 
-#SBATCH --account=project_<tähänseyhtprojektinnumero>
+#SBATCH --job-name=colinv_test 
+#SBATCH --account=project_462000039
 #SBATCH --time=00:20:00
 #SBATCH --nodes=1 
 #SBATCH --ntasks=1 
