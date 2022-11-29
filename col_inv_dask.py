@@ -2,22 +2,16 @@
 
 import numpy as np
 import xarray as xr
-import scipy.sparse.linalg 
+from scipy.sparse.linalg import gmres
 import dask
-from dask import delayed
-import dask.array as da
-from functools import partial
 
-
-invm = np.linalg.inv
-gmres = scipy.sparse.linalg.gmres
 
 def write_to_file(M, iM, exit_codes, filename):
     out = xr.Dataset()
     out["cov"] = (('nstate'), ('nstate'), M)
     out["invcov"] = (('nstate'), ('nstate'), iM)
     out["exit_codes"] = exit_codes
-    out.to_netcdf(filename)
+    out.to_netcdf(f"outputs/{filename}")
 
 def colinv(M, tol = 1e-8):
     n = len(M)
@@ -38,7 +32,7 @@ def colinv(M, tol = 1e-8):
     return iM, exit_codes
 
 
-ds_2 = xr.open_dataset("regions_verify_202104_cov.nc", chunks = 'auto')
+ds_2 = xr.open_dataset("data/regions_verify_202104_cov.nc", chunks = 'auto')
 bio_2 = ds_2["covariance_bio"]
 M = bio_2.data.persist()
 

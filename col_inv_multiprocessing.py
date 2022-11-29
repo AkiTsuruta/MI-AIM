@@ -1,22 +1,20 @@
+#!/usr/bin/env python
 import xarray as xr
 import numpy as np
 import multiprocessing as mp
-import scipy.sparse.linalg
+from scipy.sparse.linalg import gmres
 
-gmres = scipy.sparse.linalg.gmres
-
-import multiprocessing as mp
 #as many processes as there are CPUs available
 
-nprocesses = mp.cpu_count()
-pool = mp.Pool(processes = nprocesses)
+nprocs = mp.cpu_count()
+pool = mp.Pool(processes=nprocs)
 
 def write_to_file(M, iM, exit_codes, filename):
     out = xr.Dataset()
     out["cov"] = (('nstate'), ('nstate'), M)
     out["invcov"] = (('nstate'), ('nstate'), iM)
     out["exit_codes"] = exit_codes
-    out.to_netcdf(filename)
+    out.to_netcdf(f"outputs/{filename}")
     
 
 
@@ -29,7 +27,7 @@ def parallel_gmres(M, tol=1e-8):
     return icols_exitvals
 
 
-M = xr.open_dataset("regions_verify_202104_cov.nc")["covariance_bio"].values
+M = xr.open_dataset("data/regions_verify_202104_cov.nc")["covariance_bio"].values
 
 icols_exitvals = parallel_gmres(M)
 #split inverted columns and exits to two tuples
