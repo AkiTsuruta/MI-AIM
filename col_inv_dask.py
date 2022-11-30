@@ -8,12 +8,12 @@ import dask
 
 def write_to_file(M, iM, exit_codes, filename):
     out = xr.Dataset()
-    out["cov"] = (('nstate'), ('nstate'), M)
-    out["invcov"] = (('nstate'), ('nstate'), iM)
-    out["exit_codes"] = exit_codes
-    out.to_netcdf(f"outputs/{filename}")
+    out["cov"] = (('nstate', 'nstate'), M)
+    out["invcov"] = (('nstate', 'nstate'), iM)
+    out["exit_codes"] = ('nstate', list(exit_codes))
+    out.to_netcdf(f"./{filename}.nc")
 
-def colinv(M, tol = 1e-8):
+def colinv(M):
     n = len(M)
     cols = []
     exit_codes = []
@@ -21,7 +21,7 @@ def colinv(M, tol = 1e-8):
     for i in np.arange(n):
         e_i = np.zeros(n)
         e_i[i] = 1
-        inv_col = dask.delayed(gmres)(M, e_i, tol = 1e-8)
+        inv_col = dask.delayed(gmres)(M, e_i)
         cols.append(inv_col[0])
         exit_codes.append(inv_col[1])
 
@@ -32,12 +32,10 @@ def colinv(M, tol = 1e-8):
     return iM, exit_codes
 
 
-ds_2 = xr.open_dataset("data/regions_verify_202104_cov.nc", chunks = 'auto')
-bio_2 = ds_2["covariance_bio"]
-M = bio_2.data.persist()
+M = xr.open_dataset("..data/regions_verify_202104_cov.nc", chunks = 'auto')["covariance_bio"].data.persist()
 
 iM, exit_codes = colinv(M)
-write_to_file(M, iM, exit_codes, "test1")
+write_to_file(M, iM, exit_codes, "col_dask_test")
 
 
 

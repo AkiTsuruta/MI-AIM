@@ -10,5 +10,6 @@
 
 module load LUMI/22.06 partition/L
 module load cray-python/3.9.12.1
+export PATH="/project/project_462000039/packages_cif/bin:$PATH"
 
 ./col_inv_multiprocessing.py

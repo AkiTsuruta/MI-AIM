@@ -11,10 +11,10 @@ pool = mp.Pool(processes=nprocs)
 
 def write_to_file(M, iM, exit_codes, filename):
     out = xr.Dataset()
-    out["cov"] = (('nstate'), ('nstate'), M)
-    out["invcov"] = (('nstate'), ('nstate'), iM)
-    out["exit_codes"] = exit_codes
-    out.to_netcdf(f"outputs/{filename}")
+    out["cov"] = (('nstate', 'nstate'), M)
+    out["invcov"] = (('nstate','nstate'), iM)
+    out["exit_codes"] = ('nstate', list(exit_codes))
+    out.to_netcdf(f"outputs/{filename}.nc")
     
 
 
