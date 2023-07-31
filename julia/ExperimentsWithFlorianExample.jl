@@ -55,6 +55,21 @@ function sample_matrix_covariance(x, K, rho, neighbors, n_samples)
     
 end
 
+#*****************#
+# Maija's helpers #
+#*****************#
+
+function explicit_factor_out(x, K, rho, neighbors)
+    #get the explicit factorization of a kernel out so that it can be used with Factors.assemble_covariance
+    measurements = KoLesky.point_index_measurements(x)
+    G = KoLesky.MatrixCovariance(K)
+    implicit_factor = KoLesky.ImplicitKLFactorization(G, measurements, rho, neighbors)
+    explicit_factor = KoLesky.ExplicitKLFactorization(implicit_factor)
+    return explicit_factor
+end    
+    
+
+
 
 #*********************************************#
 # Maija's helper to get the U of Cholesky out #
@@ -71,9 +86,14 @@ end
 #But is the covariance matrix now K or G? Answer: It is K. G is a MatrixCovariance object that is a covariance function
 
 
-# *************** #
-# Test functions  #
-# *************** #
+
+
+
+
+
+# *******#
+# Tests  #
+# *******#
 
 # Example random locations
 N = 1000 # how many locations
@@ -93,23 +113,33 @@ rho = 5 # accuracy of approximation. 2 = greedy, 8 = accurate but slow
 neighbors = 3 # how many neighbors
 n_samples = 100 # n samples from the spatial process
 
-samples = sample_matrix_covariance(x, K, rho, neighbors, n_samples)
+
+factor = explicit_factor_out(x, K, rho, neighbors);
+cov = KoLesky.assemble_covariance(factor)
+
+
+
+#samples = sample_matrix_covariance(x, K, rho, neighbors, n_samples)
 
 # Plot a sample
 #n = 10
 #scatter(x[1,:], x[2,:], marker_z = samples[:,n])
 
 #sparse array U
-U = inv_cholesky(x, K, rho, neighbors)
+#U = inv_cholesky(x, K, rho, neighbors)
 
-# now Cov^(-1) = U'U so it should be Cov = U^(-1)*U^(-1)'
+# now Cov^(-1)=? K^(-1) ~ U'U, so we can check if U'UK or KU'U ~I
+
+#U'*U*K
+
+
+#Check if K = U^(-1)*U^(-1)'
 
 #convert to dense
 
-denseU = Array(U)
-
-idenseU = inv(denseU)
-denseCov = idenseU*idenseU'
+#denseU = Array(U)
+#idenseU = inv(denseU)
+#denseCov = idenseU*idenseU'
 
 
 #plot
