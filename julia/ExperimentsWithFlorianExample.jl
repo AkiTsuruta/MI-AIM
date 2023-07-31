@@ -59,8 +59,8 @@ end
 # Maija's helpers #
 #*****************#
 
-function explicit_factor_out(x, K, rho, neighbors)
-    #get the explicit factorization of a kernel out so that it can be used with Factors.assemble_covariance
+function compute_explicit_factor(x, K, rho, neighbors)
+    #returns ExplicitKLFactorization explicit_factor 
     measurements = KoLesky.point_index_measurements(x)
     G = KoLesky.MatrixCovariance(K)
     implicit_factor = KoLesky.ImplicitKLFactorization(G, measurements, rho, neighbors)
@@ -68,27 +68,6 @@ function explicit_factor_out(x, K, rho, neighbors)
     return explicit_factor
 end    
     
-
-
-
-#*********************************************#
-# Maija's helper to get the U of Cholesky out #
-#*********************************************#
-
-function inv_cholesky(x, K, rho, neighbors)
-    measurements = KoLesky.point_index_measurements(x)
-    G = KoLesky.MatrixCovariance(K)
-    implicit_factor = KoLesky.ImplicitKLFactorization(G, measurements, rho, neighbors)
-    explicit_factor = KoLesky.ExplicitKLFactorization(implicit_factor)
-    return explicit_factor.U #this should be the U from the approx Cholesky factorization of Cov^(-1)
-end    
-    
-#But is the covariance matrix now K or G? Answer: It is K. G is a MatrixCovariance object that is a covariance function
-
-
-
-
-
 
 
 # *******#
@@ -114,8 +93,16 @@ neighbors = 3 # how many neighbors
 n_samples = 100 # n samples from the spatial process
 
 
-factor = explicit_factor_out(x, K, rho, neighbors);
-cov = KoLesky.assemble_covariance(factor)
+factor = compute_explicit_factor_(x, K, rho, neighbors);
+
+#Demonstrate what explicit factorization gives
+
+factor.U
+
+
+
+# test how close we get to K
+K_approx = KoLesky.assemble_covariance(factor)
 
 
 
