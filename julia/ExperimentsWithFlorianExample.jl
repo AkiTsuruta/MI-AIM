@@ -6,6 +6,7 @@ using StatsPlots
 using Statistics
 using StatsBase
 using Distances
+using LinearAlgebra
 
 # ************************************** #
 # Functions for example kernel modeling  #
@@ -69,6 +70,15 @@ function compute_explicit_factor(x, K, rho, neighbors)
 end    
     
 
+function assemble_inv_covariance(factor::KoLesky.ExplicitKLFactorization)
+    U_matrix = Matrix(factor.U)
+    inv_P = similar(factor.P)
+    inv_P[factor.P] = 1 : length(inv_P)
+
+    return (U_matrix * U_matrix')[inv_P, inv_P]
+end 
+
+
 
 # *******#
 # Tests  #
@@ -93,16 +103,24 @@ neighbors = 3 # how many neighbors
 n_samples = 100 # n samples from the spatial process
 
 
-factor = compute_explicit_factor_(x, K, rho, neighbors);
+factor = compute_explicit_factor(x, K, rho, neighbors);
 
-#Demonstrate what explicit factorization gives
-
-factor.U
-
-
-
-# test how close we get to K
+ 
+# compute approximations of K and inv_K
 K_approx = KoLesky.assemble_covariance(factor)
+inv_K_approx = assemble_inv_covariance(factor)
+
+#compare to exact
+
+inv_K = inv(K)
+
+#relative error
+println(norm(inv_K - inv_K_approx)/norm(inv_K))
+println(norm(K - K_approx)/norm(K))
+
+#check if inv_K_approx * K ≈ I
+heatmap(inv_K_approx * K)
+
 
 
 
@@ -112,21 +130,6 @@ K_approx = KoLesky.assemble_covariance(factor)
 #n = 10
 #scatter(x[1,:], x[2,:], marker_z = samples[:,n])
 
-#sparse array U
-#U = inv_cholesky(x, K, rho, neighbors)
-
-# now Cov^(-1)=? K^(-1) ~ U'U, so we can check if U'UK or KU'U ~I
-
-#U'*U*K
-
-
-#Check if K = U^(-1)*U^(-1)'
-
-#convert to dense
-
-#denseU = Array(U)
-#idenseU = inv(denseU)
-#denseCov = idenseU*idenseU'
 
 
 #plot
