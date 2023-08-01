@@ -6,7 +6,7 @@ using StatsPlots
 using Statistics
 using StatsBase
 using Distances
-using LinearAlgebra
+import LinearAlgebra.norm #for computing the relative error
 
 # ************************************** #
 # Functions for example kernel modeling  #
