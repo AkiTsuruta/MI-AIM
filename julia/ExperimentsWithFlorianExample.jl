@@ -6,7 +6,7 @@ using StatsPlots
 using Statistics
 using StatsBase
 using Distances
-import LinearAlgebra.norm #for computing the relative error
+
 
 # ************************************** #
 # Functions for example kernel modeling  #
@@ -71,6 +71,7 @@ end
     
 
 function assemble_inv_covariance(factor::KoLesky.ExplicitKLFactorization)
+    #returns approximation of the inverse of K
     U_matrix = Matrix(factor.U)
     inv_P = similar(factor.P)
     inv_P[factor.P] = 1 : length(inv_P)
@@ -85,7 +86,7 @@ end
 # *******#
 
 # Example random locations
-N = 1000 # how many locations
+N = 10000 # how many locations
 x = rand(2,N) # random sampling
 
 # Construct example spatial covariance matrix
@@ -98,8 +99,8 @@ l = [0.001]
 K = kernel_matrix(x'[:,:],l,k)
 
 # Control parameters for Florian's function
-rho = 5 # accuracy of approximation. 2 = greedy, 8 = accurate but slow
-neighbors = 3 # how many neighbors
+rho = 8 # accuracy of approximation. 2 = greedy, 8 = accurate but slow
+neighbors = 10 # how many neighbors
 n_samples = 100 # n samples from the spatial process
 
 
@@ -107,20 +108,29 @@ factor = compute_explicit_factor(x, K, rho, neighbors);
 
  
 # compute approximations of K and inv_K
-K_approx = KoLesky.assemble_covariance(factor)
-inv_K_approx = assemble_inv_covariance(factor)
+#K_approx = KoLesky.assemble_covariance(factor)
+#inv_K_approx = assemble_inv_covariance(factor)
 
 #compare to exact
 
-inv_K = inv(K)
+#inv_K = inv(K)
 
+
+import LinearAlgebra
 #relative error
-println(norm(inv_K - inv_K_approx)/norm(inv_K))
-println(norm(K - K_approx)/norm(K))
+#println(LinearAlgebra.norm(inv_K .- inv_K_approx)/LinearAlgebra.norm(inv_K))
+#println(LinearAlgebra.norm(K .- K_approx)/LinearAlgebra.norm(K))
 
 #check if inv_K_approx * K ≈ I
-heatmap(inv_K_approx * K)
+#inv_K_approx * K
 
+
+# Largeish relative error between inv_K and inv_K_approx. 
+# According to Otto this is probably due to U being a sparse approximation
+# Compare instead U_approx to actual Cholesky U
+U_approx = Matrix(factor.U)
+C = LinearAlgebra.cholesky(K[factor.P, factor.P])
+U = inv(C.U)
 
 
 
