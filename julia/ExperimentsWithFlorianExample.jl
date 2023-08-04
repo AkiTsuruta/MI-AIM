@@ -86,7 +86,7 @@ end
 # *******#
 
 # Example random locations
-N = 10000 # how many locations
+N = 1000 # how many locations
 x = rand(2,N) # random sampling
 
 # Construct example spatial covariance matrix
@@ -143,8 +143,44 @@ U = inv(C.U)
 
 
 #plot
-#values in the array are from such a large scale that
-#it looks like it's mainly zeros. Need to adjust the plot
-#ranges to be able to see something
-#heatmap(denseCov)
+#colormap = cgrad(:matter, 7, categorical=true);
+colormap = cgrad(:bwr)
+#need to zoom in to see anything
 
+U_slice = U[1:100, 1:100]
+U_approx_slice = U_approx[1:100, 1:100]
+
+using LinearAlgebra
+
+#only select values in the upper triangular part of the matrix U for inspecting the distribution
+# of values in that part and gather them to a vector
+
+function select_uvals(A::AbstractArray)
+    uvals = []
+    n = size(A,2)
+    for j in 1:n
+        for i in 1:j
+            push!(uvals, A[i,j])
+        end
+    end
+    return uvals
+end
+
+U_uvals = select_uvals(U)
+U_approx_uvals = select_uvals(U_approx)
+
+import Statistics
+
+quantile(U_uvals, [0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1])
+quantile(U_approx_uvals, [0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1])
+
+p1 = heatmap(U, yflip=true, c=:bwr, clims = (-14, 14))
+
+lens!([1,50], [1,50], inset = (1, bbox(0.5, 0.0, 0.4, 0.4)))
+
+
+p2 = heatmap(U_approx, yflip=true, c=:bwr, clims = (-14, 14))
+
+p2 = spy(U_slice, c=:bwrm )
+#p1 = heatmap(U_slice, c = colormap, yflip = true, clims = (-100, 100))
+#p2 = spy(U, clims = (-100, 100))
