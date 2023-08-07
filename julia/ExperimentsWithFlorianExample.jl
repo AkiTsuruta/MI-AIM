@@ -81,13 +81,16 @@ end
 
 
 
-# *******#
-# Tests  #
-# *******#
+# **********************#
+# Compute factorization #
+# **********************#
 
 # Example random locations
-N = 1000 # how many locations
+
+
+N = 10000 # how many locations
 x = rand(2,N) # random sampling
+
 
 # Construct example spatial covariance matrix
 # select kernel
@@ -104,9 +107,33 @@ neighbors = 10 # how many neighbors
 n_samples = 100 # n samples from the spatial process
 
 
-factor = compute_explicit_factor(x, K, rho, neighbors);
+#************************************#
+# Timing with different values for N #
+#************************************#
 
+times_KoLesky = Dict();
+times_cho = Dict();
+
+
+
+#Ns = [100, 1000, 5000, 10000]
+#for N in Ns
+    #x = rand(2, N)
+    #K = kernel_matrix(x'[:,:],l,k)
+    #times_KoLesky["$N"] = @elapsed compute_explicit_factor(x, K, rho, neighbors);
+    #times_cho["$N"] = @elapsed cholesky(K)
+#end
+
+
+
+@time compute_explicit_factor(x, K, rho, neighbors);
+
+
+using LinearAlgebra
  
+
+
+
 # compute approximations of K and inv_K
 #K_approx = KoLesky.assemble_covariance(factor)
 #inv_K_approx = assemble_inv_covariance(factor)
@@ -116,7 +143,7 @@ factor = compute_explicit_factor(x, K, rho, neighbors);
 #inv_K = inv(K)
 
 
-import LinearAlgebra
+
 #relative error
 #println(LinearAlgebra.norm(inv_K .- inv_K_approx)/LinearAlgebra.norm(inv_K))
 #println(LinearAlgebra.norm(K .- K_approx)/LinearAlgebra.norm(K))
@@ -134,6 +161,14 @@ U = inv(C.U)
 
 
 
+
+#need to zoom in to see anything
+
+U_slice = LinearAlgebra.UpperTriangular(U[1:20, 1:20])
+U_approx_slice = LinearAlgebra.UpperTriangular(U_approx[1:20, 1:20])
+
+println(U_slice)
+println(U_approx_slice)
 #samples = sample_matrix_covariance(x, K, rho, neighbors, n_samples)
 
 # Plot a sample
@@ -142,13 +177,16 @@ U = inv(C.U)
 
 
 
-#plot
-#colormap = cgrad(:matter, 7, categorical=true);
-colormap = cgrad(:bwr)
-#need to zoom in to see anything
 
-U_slice = U[1:100, 1:100]
-U_approx_slice = U_approx[1:100, 1:100]
+
+#**********#
+# Plotting #
+#**********#
+
+
+
+#colormap = cgrad(:matter, 7, categorical=true);
+
 
 using LinearAlgebra
 
@@ -169,18 +207,24 @@ end
 U_uvals = select_uvals(U)
 U_approx_uvals = select_uvals(U_approx)
 
-import Statistics
 
-quantile(U_uvals, [0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1])
-quantile(U_approx_uvals, [0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1])
+#quantile(U_uvals, [0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1])
+#quantile(U_approx_uvals, [0, 0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99, 1])
 
-p1 = heatmap(U, yflip=true, c=:bwr, clims = (-14, 14))
-
-lens!([1,50], [1,50], inset = (1, bbox(0.5, 0.0, 0.4, 0.4)))
+#p1 = heatmap(U, yflip=true, c=:bwr, clims = (-14, 14), title = "Exact Cholesky factor U")
+#lens!([1,50], [1,50], inset = (1, bbox(0.1, 0.45, 0.4, 0.4, )), yflip = true, clims = (-14, 14), legend = :none)
 
 
-p2 = heatmap(U_approx, yflip=true, c=:bwr, clims = (-14, 14))
 
-p2 = spy(U_slice, c=:bwrm )
+#p2 = heatmap(U_approx, yflip=true, c=:bwr, clims = (-14, 14), title = "Sparse approximation")
+#lens!([1,50], [1,50], inset = (1, bbox(0.1, 0.45, 0.4, 0.4, )), yflip = true, clims = (-14, 14), legend = :none)
+
+#p3 = heatmap(U.-U_approx, yflip=true, c=:bwr, clims = (-0.1, 0.1))
+
+
+
+
+
+#spy(U_approx, c=:inferno, clims = (-14, 14))
 #p1 = heatmap(U_slice, c = colormap, yflip = true, clims = (-100, 100))
 #p2 = spy(U, clims = (-100, 100))
