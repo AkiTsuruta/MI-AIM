@@ -102,8 +102,8 @@ l = [0.001]
 K = kernel_matrix(x'[:,:],l,k)
 
 # Control parameters for Florian's function
-rho = 8 # accuracy of approximation. 2 = greedy, 8 = accurate but slow
-neighbors = 10 # how many neighbors
+rho = 5 # accuracy of approximation. 2 = greedy, 8 = accurate but slow
+neighbors = 5 # how many neighbors
 n_samples = 100 # n samples from the spatial process
 
 
@@ -111,25 +111,52 @@ n_samples = 100 # n samples from the spatial process
 # Timing with different values for N #
 #************************************#
 
-times_KoLesky = Dict();
-times_cho = Dict();
+import LinearAlgebra: norm, cholesky
+
+
+times = []; #vector for timing results
+times_ref = []; #reference times from LinearAlgebra.cholesky
+rhos = 2:8
+neighborss = 8:12
 
 
 
-#Ns = [100, 1000, 5000, 10000]
-#for N in Ns
-    #x = rand(2, N)
-    #K = kernel_matrix(x'[:,:],l,k)
-    #times_KoLesky["$N"] = @elapsed compute_explicit_factor(x, K, rho, neighbors);
-    #times_cho["$N"] = @elapsed cholesky(K)
-#end
+Ns = 1000:1000:10000 #start:step:stop makes a list 
+using DataFrames
+
+
+#the test function below needs to be corrected: since the input vectors
+#are of different length, cannot just but forloops like that 
+#and after the loops assemble the dataframe from input vectors and
+#output vectors. Either different input & output vectors for Ns exact
+#and assembling after loops, or assembling the dataframe on the go inside 
+#the innermost loop so that separate vectors not needed for times 
+
+
+# function param_variation_test(in_N, in_rho, in_neighbors)
+#     for N in in_N
+#         for rho in in_rho
+#             for neighbors in in_neighborss
+#                 x = rand(2, N)
+#                 K = kernel_matrix(x'[:,:],l,k)
+#                 push!(times) = @elapsed compute_explicit_factor(x, K, rho, neighbors);
+#                 #how to get both the time and the output
+#                 push!(times_ref) = @elapsed cholesky(K)
+                
+#             end
+#         end
+#     end
+
+# end
+using DataFrames
+
 
 
 
 @time compute_explicit_factor(x, K, rho, neighbors);
 
 
-using LinearAlgebra
+
  
 
 
@@ -156,7 +183,7 @@ using LinearAlgebra
 # According to Otto this is probably due to U being a sparse approximation
 # Compare instead U_approx to actual Cholesky U
 U_approx = Matrix(factor.U)
-C = LinearAlgebra.cholesky(K[factor.P, factor.P])
+C = cholesky(K[factor.P, factor.P])
 U = inv(C.U)
 
 
