@@ -132,6 +132,8 @@ using DataFrames
 #and assembling after loops, or assembling the dataframe on the go inside 
 #the innermost loop so that separate vectors not needed for times 
 
+#also: need to decide if I should compare to the time it takes to compute
+#cholesky or permuted cholesky. 
 
 # function param_variation_test(in_N, in_rho, in_neighbors)
 #     for N in in_N
