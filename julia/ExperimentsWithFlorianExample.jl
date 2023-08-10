@@ -88,7 +88,7 @@ end
 # Example random locations
 
 
-N = 10000 # how many locations
+N = 20000 # how many locations
 x = rand(2,N) # random sampling
 
 
@@ -155,7 +155,7 @@ using DataFrames
 
 
 
-@time compute_explicit_factor(x, K, rho, neighbors);
+compute_explicit_factor(x, K, rho, neighbors);
 
 
 
