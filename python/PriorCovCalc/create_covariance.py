@@ -14,6 +14,7 @@ region = xr.open_dataset('regions_verify_202011.nc')
 transcom_regions = region.transcom_regions.values
 ntc = transcom_regions.max()
 
+#northern high latitudes zoom-in 1 x 1 degree
 nhl = list(range(1, 7)) + [15, 16] + list(range(23, 30))
 print('NHL 1x1 mTCs: ', nhl)
 
@@ -69,6 +70,7 @@ def gettc(region, j=None):
 
 
 def calc_offdiagnals11(cov, region, j, v, dregions, L):
+    # off-diagonals for 1x1 areas
     latc1, lonc1 = latlon11(region, j, v)
     # off-diagnals
     for jj in dregions:
@@ -95,9 +97,9 @@ def istccorr(tc, tc2, nhl, oce_tc):
         out = False  # no correlation between land and ocean
     return out
 
-
 def calc_offdiagnalstc(cov, tc, ntc, nhl, oce_tc, L, latc_tc, lonc_tc, region,
                        transcom_regions, v):
+    #Version that Maria has fixed. Off-diagonals of TransCom areas
     for tc2 in range(1, ntc):  # do not loop through ice region
         if istccorr(tc, tc2, nhl, oce_tc):
             # correlation length
@@ -107,8 +109,25 @@ def calc_offdiagnalstc(cov, tc, ntc, nhl, oce_tc, L, latc_tc, lonc_tc, region,
             jj = list(set(region['regions_%s' % v].values[np.where(
                 transcom_regions == tc2)].flatten()))[0]
             # print('        ',tc,tc2,j-1,ind)
-            cov[j-1, jj-1] = cov[j-1, j-1]*np.exp(-1*(dists/Ld))
+            cov[j-1, jj-1] = ((cov[j-1, j-1]**0.5) * (cov[jj-1, jj-1]**0.5)
+                              * np.exp(-1*(dists/Ld)))
     return cov
+
+# alla olevassa calc_offdiagnalstc Marian mukaan bugi
+
+# def calc_offdiagnalstc(cov, tc, ntc, nhl, oce_tc, L, latc_tc, lonc_tc, region,
+#                        transcom_regions, v):
+#     for tc2 in range(1, ntc):  # do not loop through ice region
+#         if istccorr(tc, tc2, nhl, oce_tc):
+#             # correlation length
+#             Ld = L['land2'] if tc not in oce_tc else L['ocean']
+#             dists = points2distance(
+#                 latc_tc[tc-1], lonc_tc[tc-1], latc_tc[tc2-1], lonc_tc[tc2-1])
+#             jj = list(set(region['regions_%s' % v].values[np.where(
+#                 transcom_regions == tc2)].flatten()))[0]
+#             # print('        ',tc,tc2,j-1,ind)
+#             cov[j-1, jj-1] = cov[j-1, j-1]*np.exp(-1*(dists/Ld))
+#     return cov
 
 
 def finalize(cov, sigmas):
