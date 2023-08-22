@@ -1,3 +1,5 @@
+# version with Maija's comments 
+
 
 from datetime import date
 from nearestPD import nearestPD
@@ -10,7 +12,7 @@ import sys
 
 today = date.today()
 
-region = xr.open_dataset('regions_verify_202011.nc')
+region = xr.open_dataset('/home/pietaril/Documents/MI-AIM/python/PriorCovCalc/regions_verify_202011.nc')
 transcom_regions = region.transcom_regions.values
 ntc = transcom_regions.max()
 
@@ -48,7 +50,7 @@ def sigma(tc, ntc, var, sigmas, oce_tc, ice_tc):
     return out
 
 
-def latlon11(region, r, var):
+def latlon11(region, r, v):
     w = np.where(region['regions_%s' % v].values == r)
     latc = region.latitude.values[w[0]]
     lonc = region.longitude.values[w[1]]
@@ -74,6 +76,7 @@ def calc_offdiagnals11(cov, region, j, v, dregions, L):
     latc1, lonc1 = latlon11(region, j, v)
     # off-diagnals
     for jj in dregions:
+        # tämä varmaan siksi että ei kahdesti lasketa samaa off-diagonaalia
         if j >= jj:
             continue
         jj = int(jj)
@@ -181,13 +184,16 @@ for vv in ['bio', 'anth', 'anth2']:
 
     for i in set(categ.values.flatten()):
         print('  categ: ', i)
+        # filter variables in dataset "region" so that everything for which categ not i is set to nan
         dummy = region.where(categ == i, drop=True)
+        # get tc corresponding to categ i
         tc = gettc(dummy, None)
 
         if v == 'bio' and tc in oce_tc:
             print(tc)
             continue  # do not optimize ocean flux for bio
-
+        
+        #filter optimization regions corresponding to categ i
         dregions = dummy['regions_%s' % v].values.flatten()
         dregions = set(dregions[~np.isnan(dregions)])
 
@@ -198,6 +204,7 @@ for vv in ['bio', 'anth', 'anth2']:
 
             # diagnals
             tc = gettc(dummy, j)
+            # j-1 because opt regions numbering starts from 1 -> conversion to 0-based indexing
             cov[j-1, j-1] = sigma(tc, ntc, v, sigmas, oce_tc,
                                   ice_tc)**2
             if tc == ice_tc:
@@ -218,11 +225,11 @@ for vv in ['bio', 'anth', 'anth2']:
         break
     break
 
-    i_lower = np.tril_indices(nr, -1)
-    cov[i_lower] = cov.T[i_lower]
+# i_lower = np.tril_indices(nr, -1) # lower triangular indices (excluding the diagonal)
+# cov[i_lower] = cov.T[i_lower]
 
-    cov = finalize(cov, sigmas)
-    dof = check(cov)
-    out_cov = write_dataarray(out_cov, cov, vv, nr, dof)
+# cov = finalize(cov, sigmas)
+# dof = check(cov)
+# out_cov = write_dataarray(out_cov, cov, vv, nr, dof)
 
 # out_cov.to_netcdf('%s_cov.nc' % wfile.split('.nc')[0])
