@@ -83,7 +83,10 @@ def calc_offdiagnals11(cov, region, j, v, dregions, L):
         latc2, lonc2 = latlon11(region, jj, v)
         dists = points2distance(latc1, lonc1, latc2, lonc2)
         # print(j,jj, latc1,lonc1,latc2,lonc2,dists);sys.exit()
-        cov[j-1, jj-1] = cov[j-1, j-1]*np.exp(-1*(dists/L['land1']))
+        cov[j-1, jj-1] = ((cov[j-1, j-1]**0.5) * (cov[jj-1, jj-1]**0.5)
+                          * np.exp(-1*(dists/L['land1'])))
+        #below the version for when stds, not vars on diagonal
+        #cov[j-1, jj-1] = cov[j-1, j-1]*np.exp(-1*(dists/L['land1']))
     return cov
 
 
@@ -116,7 +119,8 @@ def calc_offdiagnalstc(cov, tc, ntc, nhl, oce_tc, L, latc_tc, lonc_tc, region,
                               * np.exp(-1*(dists/Ld)))
     return cov
 
-# alla olevassa calc_offdiagnalstc Marian mukaan bugi
+# alla olevassa calc_offdiagnalstc vika rivi laskettu siten kuin Akin
+# mulle lähettämässä skriptissä, jossa stds diagonaalilla, ei vars
 
 # def calc_offdiagnalstc(cov, tc, ntc, nhl, oce_tc, L, latc_tc, lonc_tc, region,
 #                        transcom_regions, v):
@@ -221,15 +225,15 @@ for vv in ['bio', 'anth', 'anth2']:
                     continue  # no correlation over mTCs in anth
                 cov = calc_offdiagnalstc(
                     cov, tc, ntc, nhl, oce_tc, L, latc_tc, lonc_tc, region, transcom_regions, v)
-            break
-        break
-    break
+            #break
+        #break
+    #break
 
-# i_lower = np.tril_indices(nr, -1) # lower triangular indices (excluding the diagonal)
-# cov[i_lower] = cov.T[i_lower]
+    i_lower = np.tril_indices(nr, -1) # lower triangular indices (excluding the diagonal)
+    cov[i_lower] = cov.T[i_lower]
 
-# cov = finalize(cov, sigmas)
-# dof = check(cov)
-# out_cov = write_dataarray(out_cov, cov, vv, nr, dof)
+    cov = finalize(cov, sigmas)
+    dof = check(cov)
+    out_cov = write_dataarray(out_cov, cov, vv, nr, dof)
 
-# out_cov.to_netcdf('%s_cov.nc' % wfile.split('.nc')[0])
+out_cov.to_netcdf('%s_cov.nc' % wfile.split('.nc')[0])
