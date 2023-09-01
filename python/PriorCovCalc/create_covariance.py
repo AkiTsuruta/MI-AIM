@@ -182,7 +182,7 @@ for vv in ['bio', 'anth', 'anth2']:
     v = 'bio' if vv == 'bio' else 'anth'
     print('Create covariance for ', v)
 
-    nr = region['regions_%s' % v].values.max()
+    nr = region['regions_%s' % v].values.max() #6858
     cov = np.zeros((nr, nr))
     categ = region['regions_%s_categ' % v]
 
