@@ -11,12 +11,18 @@ using NCDatasets
 
 
 # read nc file & load matrix data
-pathtodata = "/home/pietaril/Documents/data/regions_verify_202104_cov.nc";
+pathtodata = "/home/pietaril/Documents/data/CO2M_testdata/unc_cov_matrices/unc_cov_matrix20250609.nc";
 
-ds = Dataset(pathtodata)
-bio = ds["covariance_bio"]
-K = bio[:,:]
-close(ds)
+ds = Dataset(pathtodata);
+K = ds["covariance"][:,:];
+lon = ds["lon"][:];
+lat = ds["lat"][:];
+close(ds);
+
+
+x = [lat'; lon'];
+x
+
 
 
 #*******************************************#
@@ -33,8 +39,8 @@ function compute_explicit_factor(x, K, rho, neighbors)
 end    
 
 
-N = 6858 # how many locations
-x = rand(2,N) # random sampling
+#N = 6858 # how many locations
+#x = rand(2,N) # random sampling
 
 
 # length scale
@@ -42,8 +48,8 @@ l = [0.001]
 
 
 # Control parameters for Florian's function
-rho = 8 # accuracy of approximation. 2 = greedy, 8 = accurate but slow
-neighbors = 10 # how many neighbors
+rho = 5 # accuracy of approximation. 2 = greedy, 8 = accurate but slow
+neighbors = 9 # how many neighbors
 n_samples = 100 # n samples from the spatial process
 
 
