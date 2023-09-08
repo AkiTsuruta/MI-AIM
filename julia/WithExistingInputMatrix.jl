@@ -11,7 +11,7 @@ using NCDatasets
 
 
 # read nc file & load matrix data
-pathtodata = "/home/pietaril/Documents/data/CO2M_testdata/unc_cov_matrices/unc_cov_matrix20250609.nc";
+pathtodata = "/home/pietaril/Documents/data/CO2M_testdata/unc_cov_matrices/unc_cov_matrix20250101_notpd.nc";
 
 ds = Dataset(pathtodata);
 K = ds["covariance"][:,:];
