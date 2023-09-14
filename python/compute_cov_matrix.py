@@ -41,19 +41,21 @@ def regrid(data, lon, lat, factor1, factor2):
 
     return data_reg, lon_reg, lat_reg
 
-
 def covariance_matrix(matrix):
     """
     Computes the covariance matrix of a matrix with NaN values.
     """
     matrix_flat = np.asarray(matrix).flatten()
+    # Replace NaN values with mean
+    matrix_flat[np.isnan(matrix_flat)] = np.nanmedian(matrix_flat)
+
     deviations = matrix_flat - np.nanmean(matrix_flat)
-    deviations[np.isnan(deviations)] = 0
     outer_product = np.outer(deviations, deviations)
-    num_non_nan = np.count_nonzero(~np.isnan(matrix_flat))
-    covariance_matrix = outer_product / (num_non_nan - 1)
+    
+    covariance_matrix = outer_product / (len(matrix_flat) - 1)
 
     return covariance_matrix
+
 
 def main():
     NUMBER_OF_FILES = 1 # change to the number of covariance matrices you want to produce
