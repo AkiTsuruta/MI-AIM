@@ -8,10 +8,11 @@ using Statistics
 using StatsBase
 using Distances
 using NCDatasets
+using LinearAlgebra
 
 
 # read nc file & load matrix data
-pathtodata = "/home/pietaril/Documents/data/CO2M_testdata/unc_cov_matrices/unc_cov_matrix20250101_nanmedian.nc";
+pathtodata = "/home/pietaril/Documents/data/CO2M_testdata/unc_cov_matrices/unc_cov_matrix20250101_nanmedian_small.nc";
 
 ds = Dataset(pathtodata);
 K = ds["covariance"][:,:];
@@ -21,8 +22,10 @@ close(ds);
 
 
 x = [lat'; lon'];
-x
 
+a = max(0, -2eigmin(K)) * I
+
+K = K + a
 
 
 #*******************************************#
@@ -58,3 +61,4 @@ factor = compute_explicit_factor(x, K, rho, neighbors);
 
 K_approx = KoLesky.assemble_covariance(factor)
 K
+
