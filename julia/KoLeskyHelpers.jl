@@ -36,12 +36,12 @@ function read_cov_from_file(filepath::String)
     ds = Dataset(filepath);
     K = ds["covariance"][:,:];
     #julia thinks K still contains missing values, convert the type
-    K = convert(Array{Float64}, K)
+    K = convert(Matrix{Float64}, K)
     lon = ds["lon"][:];
     lat = ds["lat"][:];
     close(ds);
     x = [lat'; lon'];
-    x = convert(Array{Float64}, x)
+    x = convert(Matrix{Float64}, x)
 
     return K, x
 end
@@ -67,8 +67,13 @@ function write_iK_to_file(iK_approx::Matrix{T}, filename::String, rho::Int64, ne
     
 end 
 
+function write_perfdata_to_file()
+
+end
+
 function main(datapath::String, rho::Int64, neighbors::Int64, a = 1e-16)
     K, x = read_cov_from_file(datapath);
+    # what if K already PD? Should it first be tested if it is or not?
     make_PD!(K,a);
     iK_approx = KL_invert(x, K, rho, neighbors);
     write_iK_to_file(iK_approx, "iK_test1", rho, neighbors);
