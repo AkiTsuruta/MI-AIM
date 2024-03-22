@@ -4,6 +4,7 @@ from datetime import date
 import xarray as xr
 import numpy as np
 import os
+from global_land_mask import globe
 
 def haversine_distance(lat, lon):
     """
@@ -36,32 +37,36 @@ def haversine_distance(lat, lon):
 
     return distances
 
+ def create_lsm(latmin, latmax, lonmin, lonmax):
+     """Creates a land-sea mask (land=1, sea=0) in 0.1 deg x 0.1 deg resolution
+     for the chosen area.
+     """
+     lat = np.linspace(latmin,latmax, (latmax-latmin)*10)
+     lon = np.linspace(lonmin,lonmax, (lonmax - lonmin)*10)
+     lon_grid, lat_grid = np.meshgrid(lon,lat)
+     z = globe.is_land(lat_grid, lon_grid)
+     z_int = np.array(z, dtype=int)
+     lsm = xr.DataArray(z_int, coords=[lat, lon], dims=["lat", "lon"])
+     return lsm
+   
 
-def pick_area(lsm, latmin, latmax, lonmin, lonmax):
-    lsm = lsm.where((latmin <= lsm.latitude) & (lsm.latitude <= latmax)
-          &(lonmin <= lsm.longitude)& (lsm.longitude <= lonmax), drop=True) 
-    lsm_flat = lsm.stack(latlon=("latitude", "longitude"))
-    return lsm_flat
-    
-
-def compute_cov(lsm_flat, sigmas, L, prop_land = 0.5):
+def compute_cov(lsm, sigmas, L):
+    lsm_flat = lsm.stack(latlon=("lat", "lon"))
 
     nstate = lsm_flat.shape[0]
-    #convert lsm to binary mask
-    lsm_flat[lsm_flat <= prop_land] = 0
-    lsm_flat[lsm_flat > prop_land] = 1
-    #sort so that land first, then sea
+
+    #sort so that land cells first, then sea
     lsm_flat = lsm_flat.sortby(lsm_flat, ascending=False)
     #number of land gridcells = sum of land values
     nland = int(sum(lsm_flat.values))
+    print(f"number of land cells: {nland}")
     #initialize cov matrix
     cov = np.zeros((nstate, nstate))
-    lat = lsm_flat["latitude"].values
-    lon = lsm_flat["longitude"].values
+    lat = lsm_flat["lat"].values
+    lon = lsm_flat["lon"].values
 
     #compute covariances separately for land and ocean 
     for v in ["land", "ocean"]:
-        print(v)
         if v == "land":
             inds = [0, nland]
        
@@ -85,32 +90,30 @@ def create_dataset(covariance, lat, lon):
     """
     out_cov = xr.Dataset(
         data_vars={"covariance": (["nparams", "nparams"], covariance)},
-        coords={"lon": (["nparams"], lon),
-                  "lat": (["nparams"], lat)},
+        coords={"lon": (["nparams"], np.asarray(lon).flatten()),
+                  "lat": (["nparams"], np.asarray(lat).flatten()),},
         attrs={'comment': f"Prior covariance for CO2 bio fluxes"}
     )
     return out_cov
 
 
 
-#land-sea-mask_0.1x0.1deg
-PATHTOMASK = '/home/pietaril/Documents/data/masks/lsm_1279l4_0.1x0.1.grb_v4_unpack.nc'
-lsm = xr.open_dataset(PATHTOMASK)["lsm"][0]
+
+
+
 
 #output 
 OUTPUT_PATH = '/home/pietaril/Documents/data/unc_cov_matrices'
 today = date.today()
 output_filename = 'CO2_prior_cov_eur_%04d%02d.nc' % (today.year, today.month)
 
-#Finland - approx  latitude: 59.6 - 70.1, longitude: 19.3 -31.6
-#Europe: coords from Aki: -12, 39, 35, 74
 
-latmin = -12.0
-latmax = 39.0
-lonmin = 35.0
-lonmax = 74.0
+latmin = 30
+latmax = 75
+lonmin = -15
+lonmax = 40
 
-lsm_flat = pick_area(lsm, latmin, latmax, lonmin, lonmax)
+lsm = create_lsm(latmin, latmax, lonmin, lonmax)
 
 # Uncertainty (std)
 sigmas = {'land': 0.8,
@@ -122,7 +125,7 @@ L = {'land': 100,  #
      'ocean': 500}  # for ocean
 
 #compute cov matrix and coordinates ordered so that first land then ocean
-cov, lat, lon = compute_cov(lsm_flat, sigmas, L)
+cov, lat, lon = compute_cov(lsm, sigmas, L)
 
 
 # Output dataset
