@@ -3,8 +3,8 @@
 from datetime import date
 import xarray as xr
 import numpy as np
-import os
 from global_land_mask import globe
+import matplotlib.pyplot as plt
 
 def haversine_distance(lat, lon):
     """
@@ -37,7 +37,7 @@ def haversine_distance(lat, lon):
 
     return distances
 
- def create_lsm(latmin, latmax, lonmin, lonmax):
+def create_lsm(latmin, latmax, lonmin, lonmax):
      """Creates a land-sea mask (land=1, sea=0) in 0.1 deg x 0.1 deg resolution
      for the chosen area.
      """
@@ -51,6 +51,11 @@ def haversine_distance(lat, lon):
    
 
 def compute_cov(lsm, sigmas, L):
+    """The function computes a spatial covariance matrix using
+    formula sigma^2*exp(-d/l), where d is the distance between
+    cells, l is the length-scale and sigma is the standard deviation
+    """
+
     lsm_flat = lsm.stack(latlon=("lat", "lon"))
 
     nstate = lsm_flat.shape[0]
@@ -109,9 +114,14 @@ output_filename = 'CO2_prior_cov_eur_%04d%02d.nc' % (today.year, today.month)
 
 
 latmin = 30
-latmax = 75
-lonmin = -15
-lonmax = 40
+latmax = 40
+lonmin = -10
+lonmax = 0
+
+# latmin = 30
+# latmax = 75
+# lonmin = -15
+# lonmax = 40
 
 lsm = create_lsm(latmin, latmax, lonmin, lonmax)
 
@@ -126,11 +136,17 @@ L = {'land': 100,  #
 
 #compute cov matrix and coordinates ordered so that first land then ocean
 cov, lat, lon = compute_cov(lsm, sigmas, L)
+print(cov.shape)
 
+plt.figure(1)
+plt.title("Prior cov xco2")
+plt.pcolormesh(cov)
+plt.colorbar()
+plt.savefig()
 
 # Output dataset
-out_cov = create_dataset(cov, lat, lon)
+#out_cov = create_dataset(cov, lat, lon)
 
 
-out_cov.to_netcdf(os.path.join(OUTPUT_PATH, output_filename))
+#out_cov.to_netcdf(os.path.join(OUTPUT_PATH, output_filename))
 

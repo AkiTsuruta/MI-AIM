@@ -109,5 +109,5 @@ end
 
 
 
-filepath = "/home/pietaril/Documents/data/CO2M_testdata/unc_cov_matrices/unc_cov_matrix20250609_nanmedian_small.nc";
-main(filepath, 2, 9)
+#filepath = "/home/pietaril/Documents/data/CO2M_testdata/unc_cov_matrices/unc_cov_matrix20250609_nanmedian_small.nc";
+#main(filepath, 2, 9)
