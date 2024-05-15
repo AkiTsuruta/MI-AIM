@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
-from datetime import date
+from datetime import datetime
 import xarray as xr
 import numpy as np
 from global_land_mask import globe
 import matplotlib.pyplot as plt
+import os
 
 def haversine_distance(lat, lon):
     """
@@ -70,7 +71,7 @@ def compute_cov(lsm, sigmas, L):
     lat = lsm_flat["lat"].values
     lon = lsm_flat["lon"].values
 
-    #compute covariances separately for land and ocean 
+    #compute covariances for land and ocean into one big matrix
     for v in ["land", "ocean"]:
         if v == "land":
             inds = [0, nland]
@@ -87,6 +88,53 @@ def compute_cov(lsm, sigmas, L):
         
     return cov, lat, lon
     
+def compute_cov_sep(lsm, sigmas, L):
+    """The function computes spatial covariance matrices for land and ocean areas using
+    formula sigma^2*exp(-d/l), where d is the distance between
+    cells, l is the length-scale and sigma is the standard deviation.
+
+    Returns two dictionaries: cov and coords 
+    """
+
+    lsm_flat = lsm.stack(latlon=("lat", "lon"))
+
+    nstate = lsm_flat.shape[0]
+
+    #sort so that land cells first, then sea
+    lsm_flat = lsm_flat.sortby(lsm_flat, ascending=False)
+    #number of land gridcells = sum of land values
+    nland = int(sum(lsm_flat.values))
+    nocn = nstate-nland
+    print(f"number of land cells: {nland}")
+    
+    
+    lat = lsm_flat["lat"].values
+    lon = lsm_flat["lon"].values
+
+    cov = {}
+    coords = {}
+       
+    #compute covariances separately for land and ocean 
+    for v in ["land", "ocean"]:
+        if v == "land":
+            inds = [0, nland]
+            covv = np.zeros((nland, nland))
+            
+        else:
+            inds = [nland, nstate]
+            covv = np.zeros((nocn, nocn))
+
+        latv = lat[inds[0]:inds[1]]
+        lonv = lon[inds[0]:inds[1]]  
+        dists = haversine_distance(latv, lonv)
+        sigma = sigmas[v]
+        l = L[v]
+        covv = sigma**2*np.exp(-1*(dists/l))
+        cov[v] = covv
+        coords[v] = {"lon": lonv, "lat":latv}
+        
+    return cov, coords
+
 
 def create_dataset(covariance, lat, lon):
     
@@ -109,9 +157,7 @@ def create_dataset(covariance, lat, lon):
 
 #output 
 OUTPUT_PATH = '/home/pietaril/Documents/data/unc_cov_matrices'
-today = date.today()
-output_filename = 'CO2_prior_cov_eur_%04d%02d.nc' % (today.year, today.month)
-
+today = datetime.now()
 
 latmin = 30
 latmax = 40
@@ -134,15 +180,29 @@ sigmas = {'land': 0.8,
 L = {'land': 100,  # 
      'ocean': 500}  # for ocean
 
-#compute cov matrix and coordinates ordered so that first land then ocean
-cov, lat, lon = compute_cov(lsm, sigmas, L)
-print(cov.shape)
+#compute land and ocean cov matrices separately
 
-plt.figure(1)
-plt.title("Prior cov xco2")
-plt.pcolormesh(cov)
-plt.colorbar()
-plt.savefig()
+cov, coords = compute_cov_sep(lsm, sigmas, L)
+
+for v in ["land", "ocean"]:
+    #ii = 1
+    output_filename = f'CO2_prior_cov_eur_{v}_{today.strftime("%d%m%Y")}.nc'
+    out_cov = create_dataset(cov[v], coords[v]["lat"], coords[v]["lon"])
+    out_cov.to_netcdf(os.path.join(OUTPUT_PATH, output_filename))
+
+    #plt.figure(ii)
+    #plt.title(f"Prior cov xco2 {v}")
+    #plt.pcolormesh(cov[v])
+    #plt.colorbar()
+    #plt.show()
+    #ii += 1
+    
+
+#compute cov matrix and coordinates ordered so that first land then ocean
+#cov, lat, lon = compute_cov(lsm, sigmas, L)
+#print(cov.shape)
+
+
 
 # Output dataset
 #out_cov = create_dataset(cov, lat, lon)
