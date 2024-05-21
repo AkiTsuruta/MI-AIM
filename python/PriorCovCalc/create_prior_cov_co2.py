@@ -4,7 +4,7 @@ from datetime import datetime
 import xarray as xr
 import numpy as np
 from global_land_mask import globe
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import os
 
 def haversine_distance(lat, lon):
@@ -12,8 +12,8 @@ def haversine_distance(lat, lon):
     Calculate pairwise distances between points using Haversine formula.
 
     Parameters:
-    - lat (ndarray) : 1-d array of latitude coordinates
-    - lon (ndarray) : 1-d array of longitude coordinates
+    - lat (ndarray) : 1-d flattened latitude grid
+    - lon (ndarray) : 1-d flattened longitude grid
     Returns:
     - distances (ndarray): Pairwise distances matrix.
     """
@@ -45,11 +45,35 @@ def create_lsm(latmin, latmax, lonmin, lonmax):
      """
      lat = np.linspace(latmin,latmax, (latmax-latmin)*10+1, dtype=np.float32)
      lon = np.linspace(lonmin,lonmax, (lonmax - lonmin)*10+1, dtype = np.float32)
+     print("making grid")
      longrid, latgrid = np.meshgrid(lon,lat)
+     print("constructing lsm")
      lsm = globe.is_land(latgrid, longrid)
    
      return lsm, latgrid, longrid
 
+def compute_cov_separately(lsm, latgrid, longrid, sigmas, L, v):
+    """Version of compute_cov that doesn't use dictionaries that store
+    both land and sea covariances"""
+    
+    if v == "land":
+        latv = latgrid[lsm].flatten()
+        lonv = longrid[lsm].flatten()
+             
+            
+    elif v == "ocean":
+        latv = latgrid[~lsm].flatten()
+        lonv = longrid[~lsm].flatten()
+             
+    sigma = sigmas[v]
+    l = L[v]
+    covv = sigma**2*np.exp(-1*haversine_distance(latv, lonv)/l)
+        
+    return covv, latv, lonv
+
+
+
+    
 
     
 def compute_cov(lsm, latgrid, longrid, sigmas, L):
@@ -92,25 +116,24 @@ def create_dataset(covariance, lat, lon, v):
     Creates an xarray dataset of the covariance matrix and coordinates of the grid.
     """
     out_cov = xr.Dataset(
-        data_vars={"covariance": (["nparams", "nparams"], covariance)},
-        coords={"lon": (["nparams"], np.asarray(lon).flatten()),
-                  "lat": (["nparams"], np.asarray(lat).flatten()),},
-        attrs={'comment': f"Prior covariance matrix of CO2 {v} fluxes"}
-    )
+    data_vars={"covariance": (["dim0", "dim1"], covariance),
+               "lon": (np.asarray(lon).flatten()),
+                "lat": (np.asarray(lat).flatten()),},
+    attrs={'comment': f"Prior covariance matrix of CO2 {v} fluxes"})
+    
     return out_cov
 
 
 
 
-
 #output 
-#OUTPUT_PATH = '/home/pietaril/Documents/data/unc_cov_matrices'
-OUTPUT_PATH = '/scratch/project_462000459/maija/data/co2_prior_unc_cov'
+OUTPUT_PATH = '/home/pietaril/Documents/data/unc_cov_matrices'
+#OUTPUT_PATH = '/scratch/project_462000459/maija/data/co2_prior_unc_cov'
 
 today = datetime.now()
 
 # latmin = 30
-# latmax = 40
+# latmax = 35
 # lonmin = -10
 # lonmax = 0
 
@@ -120,6 +143,7 @@ lonmin = -15
 lonmax = 40
 
 lsm, latgrid, longrid = create_lsm(latmin, latmax, lonmin, lonmax)
+print("lsm computed")
 
 # Uncertainty (std)
 sigmas = {'land': 0.8,
@@ -132,21 +156,16 @@ L = {'land': 100,  #
 
 #compute land and ocean cov matrices separately
 
-covs, coords = compute_cov(lsm, latgrid, longrid, sigmas, L)
+#covs, coords = compute_cov(lsm, latgrid, longrid, sigmas, L)
 
 for v in ["land", "ocean"]:
+    print(f"computing cov {v}")
+    covv, latv, lonv = compute_cov_separately(lsm, latgrid, longrid, sigmas, L, v)
     print(f"creating {v} output file")
-    #ii = 1
     output_filename = f'CO2_prior_cov_eur_{v}_{today.strftime("%d%m%Y")}.nc'
-    out_cov = create_dataset(covs[v], coords[v]["lat"], coords[v]["lon"], v)
+    out_cov = create_dataset(covv, latv, lonv, v)
     out_cov.to_netcdf(os.path.join(OUTPUT_PATH, output_filename))
 
-    # plt.figure(ii)
-    # plt.title(f"Prior cov xco2 {v}")
-    # plt.pcolormesh(covs[v])
-    # plt.colorbar()
-    # plt.show()
-    # ii += 1
     
 
 

@@ -39,3 +39,6 @@ fname = f"lsm_lat{latmin}_{latmax}_lon{lonmin}_{lonmax}"
 
 lsm, latgrid, longrid = create_lsm(latmin, latmax, lonmin, lonmax)
 
+for arr in [lsm, latgrid, longrid]:
+     np.save(os.join(OUTPUT_PATH))
+
