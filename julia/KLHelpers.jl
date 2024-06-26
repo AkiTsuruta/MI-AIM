@@ -7,8 +7,15 @@ include("/home/pietaril/Documents/MI-AIM/julia/KoLesky.jl-master/src/KoLesky.jl"
 using LinearAlgebra
 using NCDatasets
 using JLD
+using Distances
 
 
+function expker(X::Array{T,2}, sigma::T, l::Int64) where T <: Real
+    # Inputs: 2xN-matrix X with longitudes as first row, latitudes as second
+    d = pairwise(Haversine(), X)./1000; #in km
+    @.d = sigma^2*exp(-d/l) 
+
+end
 
 function compute_explicit_factor(K::Matrix{T}, x::Matrix{T}, rho::Int64, n_neighbors::Int64) where T <: Real
     #returns ExplicitKLFactorization explicit_factor 
