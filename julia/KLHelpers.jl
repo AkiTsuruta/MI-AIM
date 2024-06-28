@@ -10,10 +10,10 @@ using JLD
 using Distances
 
 
-function expker(X::Array{T,2}, sigma::T, l::Int64) where T <: Real
+function expker(X::Array{<:Real,2}, sigma::Real, l::Integer)
     # Inputs: 2xN-matrix X with longitudes as first row, latitudes as second
     d = pairwise(Haversine(), X)./1000; #in km
-    @.d = sigma^2*exp(-d/l) 
+    @.d = sigma^2*exp.(-d./l);
 
 end
 
