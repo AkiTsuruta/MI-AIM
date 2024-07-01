@@ -1,8 +1,8 @@
 #!/usr/bin/julia
 module KLHelpers
-include("/home/pietaril/Documents/MI-AIM/julia/KoLesky.jl-master/src/KoLesky.jl")
+#include("/home/pietaril/Documents/MI-AIM/julia/KoLesky.jl-master/src/KoLesky.jl")
 #in LUMI
-#include("/project/project_462000459/maija/kl_inv/KoLesky.jl-master/src/KoLesky.jl")
+include("/project/project_462000459/maija/kl_inv/KoLesky.jl-master/src/KoLesky.jl")
 
 using LinearAlgebra
 using NCDatasets
@@ -50,12 +50,12 @@ function read_cov_from_file(filepath::String)
     ds = Dataset(filepath);
     K = ds["covariance"][:,:];
     #julia thinks K still contains missing values, convert the type
-    K = convert(Matrix{Float64}, K)
+    K = convert(Matrix{typeof(K[1,1])}, K)
     lon = ds["lon"][:];
     lat = ds["lat"][:];
     close(ds);
     x = [lon'; lat'];
-    x = convert(Matrix{Float64}, x);
+    x = convert(Matrix{typeof(x[1,1])}, x);
 
     return K, x
 end
@@ -65,24 +65,28 @@ function read_iK_from_file(filepath::String)
     ds = Dataset(filepath);
     iK = ds["inverse_cov"][:,:];
     close(ds);
-    iK = convert(Matrix{Float64}, iK);
+    iK = convert(Matrix{typeof(iK[1,1])}, iK);
 
     return iK
 end
 
-function read_coords_from_file(filepath::String)
+function read_coords_from_file(filepath::String, useFloat32::Bool)
     ds = Dataset(filepath);
     lon = ds["lon"][:];
     lat = ds["lat"][:];
     close(ds);
     x = [lon'; lat'];
-    x = convert(Matrix{Float64}, x);
+    if useFloat32
+        x = convert(Matrix{Float32}, x);
+    else
+        x = convert(Matrix{Float64}, x);
+    end
 
     return x
 end
 
 
-function KL_invert(K::Matrix{T}, x::Matrix{T}, rho::Int64, n_neighbors::Int64) where T <: Real
+function KL_invert(K::Matrix{T}, x::Matrix{T}, rho::Integer, n_neighbors::Integer) where T <: Real
     factor = compute_explicit_factor(K, x, rho, n_neighbors)
     iK_approx = assemble_inv_covariance(factor);
     
@@ -92,7 +96,7 @@ end
 
 
 
-function write_factor_to_file(factor, rho::Int64, n_neighbors::Int64, outpath::String)
+function write_factor_to_file(factor, rho::Integer, n_neighbors::Integer, outpath::String)
     #For saving U and P and parameters n, rho, n_neighbors. Filetype here
     # is jld because couldn't save sparse matrices in netcdf
     U = factor.U;
@@ -109,21 +113,21 @@ function write_factor_to_file(factor, rho::Int64, n_neighbors::Int64, outpath::S
     
 end
 
-function write_iK_to_file(iK_approx::Matrix{T}, x::Matrix{T}, outpath::String, rho::Int64, n_neighbors::Int64) where T <: Real
+function write_iK_to_file(iK_approx::Matrix{T}, x::Matrix{T}, outpath::String, rho::Integer, n_neighbors::Integer) where T <: Real
     #For saving the entire inverted cov matrix as a netcdf file
     n = size(iK_approx, 1);
     out = NCDataset(outpath, "c");
     defDim(out, "nstate", n);
-    v = defVar(out, "inverse_cov", Float64, ("nstate", "nstate"));
+    v = defVar(out, "inverse_cov", typeof(iK[1,1]), ("nstate", "nstate"));
     v[:,:] = iK_approx;
     v.attrib["rho"] = rho;
     v.attrib["n_neighbors"] = n_neighbors;
     v.attrib["n"] = n;
     v.attrib["comments"] = "Approximate inverse of covariance matrix calculated with KoLesky";
     #add variable for coordinates
-    lon = defVar(out, "lon", Float64, ("nstate",));
+    lon = defVar(out, "lon", typeof(x[1,1]), ("nstate",));
     lon[:] = x[1, :];
-    lat = defVar(out, "lat", Float64, ("nstate",));
+    lat = defVar(out, "lat", typeof(x[2,1]), ("nstate",));
     lat[:] = x[2, :];
     #v.attrib["time"] = time;
     close(out)
@@ -131,7 +135,7 @@ function write_iK_to_file(iK_approx::Matrix{T}, x::Matrix{T}, outpath::String, r
 end 
 
 
-function main(filepath::String, rho::Int64, n_neighbors::Int64, a=1e-16)
+function main(filepath::String, rho::Integer, n_neighbors::Integer, a=1e-16)
     # read in covariance matrix K and lonlat -coordinates x
     K, x = read_cov_from_file(filepath);
     #ensure K positive definite

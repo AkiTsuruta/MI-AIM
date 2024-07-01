@@ -7,26 +7,29 @@ using NCDatasets
 #using Distances
 
 
-function write_cov_to_file(K::Matrix{T}, x::Array{T,2}, fname::String, v::String, datapath::String) where T <: Real
+
+function write_cov_to_file(K::Matrix{T}, x::Array{T,2}, v::String, outpath::String, filename::String) where T <: Real
     #For saving the cov matrix and coordinates as a netcdf file
     n = size(K, 1);
-    out = NCDataset(datapath*fname, "c");
+
+    out = NCDataset(outpath*filename, "c");
     defDim(out, "nstate", n);
-    variab = defVar(out, "covariance", Float64, ("nstate", "nstate"));
+    variab = defVar(out, "covariance", typeof(K[1,1]), ("nstate", "nstate"));
     variab[:,:] = K;
     variab.attrib["land_or_ocean"] = v;
-    lat = defVar(out, "lat", Float64, ("nstate",));
-    lon = defVar(out, "lon", Float64, ("nstate",));
+    lat = defVar(out, "lat", typeof(x[2,1]), ("nstate",));
+    lon = defVar(out, "lon", typeof(x[1,1]), ("nstate",));
     lat[:] = x[2,:];
     lon[:] = x[1,:];
     close(out);
+    
+end 
 
-end
 
-
-function main(v::String, datapath::String, area::String)
+function main(v::String, datapath::String, area::String, useFloat32::Bool)
     println("Reading in coordinates");
-    x = KLHelpers.read_coords_from_file(datapath*"coords/$(area)_$(v)_coords.nc");
+    x = KLHelpers.read_coords_from_file(datapath*"coords/$(area)_$(v)_coords.nc", useFloat32);
+
     # Uncertainty (std)
     sigmas = Dict([("land", 0.8),("ocean", 1.2)]);
 
@@ -47,7 +50,7 @@ end
 
 #datapath="/scratch/project_462000459/maija/data/co2_prior_unc_cov/";
 datapath = "/home/pietaril/Documents/data/co2_prior_unc_cov/";
-#main("ocean", datapath, "wholeur")
+#main("ocean", datapath, "wholeur", true)
 
 
 
