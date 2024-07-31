@@ -1,8 +1,8 @@
 #!/usr/bin/julia
 module KLHelpers
-#include("/home/pietaril/Documents/MI-AIM/julia/KoLesky.jl-master/src/KoLesky.jl")
+include("/home/pietaril/Documents/MI-AIM/julia/KoLesky.jl-master/src/KoLesky.jl")
 #in LUMI
-include("/project/project_462000459/maija/kl_inv/KoLesky.jl-master/src/KoLesky.jl")
+#include("/project/project_462000459/maija/kl_inv/KoLesky.jl-master/src/KoLesky.jl")
 
 using LinearAlgebra
 using NCDatasets
@@ -118,7 +118,7 @@ function write_iK_to_file(iK_approx::Matrix{T}, x::Matrix{T}, outpath::String, r
     n = size(iK_approx, 1);
     out = NCDataset(outpath, "c");
     defDim(out, "nstate", n);
-    v = defVar(out, "inverse_cov", typeof(iK[1,1]), ("nstate", "nstate"));
+    v = defVar(out, "inverse_cov", typeof(iK_approx[1,1]), ("nstate", "nstate"));
     v[:,:] = iK_approx;
     v.attrib["rho"] = rho;
     v.attrib["n_neighbors"] = n_neighbors;
@@ -153,6 +153,6 @@ end
 
 
 #filepath = "/home/pietaril/Documents/data/CO2M_testdata/unc_cov_matrices/unc_cov_matrix20250609_nanmedian_small.nc";
-#main(filepath, 2, 9)
+#main(filepath, 2, 9, true)
 
 end
